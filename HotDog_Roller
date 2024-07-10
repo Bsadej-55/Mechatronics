@@ -27,18 +27,32 @@ int phase_step = 1; // We will use wave stepping, so the steps are numbered 1-4,
 
 int main(void)
 {
-	// Data Registries - IO for DC motor
-	DDRC = 0b00011111;  // set bits PC4-PC0 as output and PC5 (ADC5) as input
+	// Data Registries - IO for MC1
 		// Follows a practice of making unused pins to be input (safer)
-	DDRD = 0b11111111;  // set all bits PD7-PC0 as output
-	// Ports - Set or Clear for DC motor
-	PORTC = 0b00011111; // set output bits on PORTC so that all outputs are off (wired as active low)
+	DDRB = 0b11111111;
+		// set bits PB7-0 as output for relay idk about this might need to fix for relay
+	DDRC = 0b00011111;
+		// set bits PC4-PC0 as output for DC motor
+		// PC5 (ADC5) as input for analog
+		// set PC6 as input for button
+	DDRD = 0b00000011;
+		// set bit PD0 as output for yellow LED
+		// set PD1 as output for red LED
+		// set PD2 and PD3 for interupts
+		// set PD7-PD4 as inputs for temperature sensor
 
-	// Data Registries - IO for stepper motor
-	DDRB = 0b00000011;  // set bits PC1-PC0 as output for the LEDs
-	DDRC = 0b00000000;  // set bit PC0 as input for the switch
-	DDRD = 0b11110000;  // set bits PD7-PC4 as output for the stepper motor
+	// Ports - Set or Clear for DC motor
+	PORTB = 0b11111111; // set output bits on PORTB so that all outputs are off (wired as active low) might need to fix for relay
+	PORTC = 0b00011111; // set output bits on PORTC so that all outputs are off (wired as active low)
+	PORTD = 0b00000011; // set output bits so that all outputs are off
+
+	// Data Registries - IO for MC2
 		// Follows a practice of making unused pins to be input (safer)
+	DDRB = 0b00000011;  // set bits PC1-PC0 as output for the LEDs
+	DDRC = 0b00000000;
+		// set bit PC0 as input for the switch
+	DDRD = 0b11110000;
+		// set bits PD7-PC4 as output for the stepper motor
 	// Ports - Set or Clear Bits for stepper motor
 	PORTB = 0b00000011; // set output bits on PORTB so that all outputs are off (wired as active low)
 	PORTC = 0b00000001; // set output bits on PORTC so that input is off (wired as active low)
