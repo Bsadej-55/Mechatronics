@@ -17,25 +17,104 @@ void wait (volatile int multiple, volatile char time_choice);
 void delay_T_msec_timer0 (char choice);
 
 // Global Variables
+char sensorvalue = 0;// value read from analog sensor (0-255 since we'll only read the upper 8 bits of the 10-bit number)
+volatile int number_of_msec = 200;
+volatile char register_B_setting;
+volatile char timer_preload;
 int phase_step = 1; // We will use wave stepping, so the steps are numbered 1-4, then will repeat.
 
 int main(void)
 {
-	// Data Registries - IO
+	// Data Registries - IO for DC motor
+	DDRC = 0b00011111;  // set bits PC4-PC0 as output and PC5 (ADC5) as input
+		// Follows a practice of making unused pins to be input (safer)
+	DDRD = 0b11111111;  // set all bits PD7-PC0 as output
+	// Ports - Set or Clear for DC motor
+	PORTC = 0b00011111; // set output bits on PORTC so that all outputs are off (wired as active low)
+
+	// Data Registries - IO for stepper motor
 	DDRB = 0b00000011;  // set bits PC1-PC0 as output for the LEDs
 	DDRC = 0b00000000;  // set bit PC0 as input for the switch
 	DDRD = 0b11110000;  // set bits PD7-PC4 as output for the stepper motor
 		// Follows a practice of making unused pins to be input (safer)
 	
-	// Ports - Set or Clear Bits
+	// Ports - Set or Clear Bits for stepper motor
 	PORTB = 0b00000011; // set output bits on PORTB so that all outputs are off (wired as active low)
 	PORTC = 0b00000001; // set output bits on PORTC so that input is off (wired as active low)
 	PORTD = 0b11110000; // set output bits on PORTD so that all outputs are off (wired as active low)
 
+	// Set up ADC
+	PRR = 0x00;
+		/* clear Power Reduction ADC bit (0) in PRR register
+		   this register can stop the clock at individual peripherals to reduce power consumption */
+	ADCSRA = 0b10000111;
+	//ADCSRA = 1 << ADEN | 1 << ADPS2 | 1 << ADPS1 | 1 << ADPS0;
+		/* can also use = 0x87 or 0b10000111
+		   sets ADC Enable bit (7) in ADCSRA register (ADEN)
+		   set ADC prescaler to 128 (bits 2-0 of ADCSRA = ADPS2-ADPS0 = 111)
+		   ADPSI0-2 are auto trigger source, 1-1-1 is TIMER/COUNTER1 capture event */
+	ADMUX = 0b01100101; // 0 << REFS1 | 1 << REFS0 | 1 << ADLAR | 1 << MUX3 | 1 << MUX0;
+		/* can also use = 0x60 or 0b01100101 [not 0b01100000];
+		   select Analog Reference voltage to be AVcc (bits 7-6 of ADMUX = 01)
+		   select left justification (bit 5 of ADMUX = ADLAR = 1)
+		   select channel 0 (bits 3-0 of ADMUX = MUX3-MUX0 = 101 [not 000]) // channel PC5 */
+	
+	// Set Up Pulse Width Modulation for DC motor
+	OCR0A = 0x00;
+		// At PD6, Load 0 into OCR0A to set initial duty cycle to 0 (motor off)
+	TCCR0A = 0b10000011;
+		/* Set non-inverting mode on OC0A - PD6 pin with Fast PWM (WGM = 11)
+		   Note: does not affect OC0B because COMB0:1 bits stay at default (= 00)
+		   COMOB1 and COMBO set to 00 so PD5 is used to control motor direction */
+	TCCR0B = 0b00000011;
+		/* Set base PWM frequency (CS02:0 bits 2-0 = 011 for prescaler = 64, approx. 1kHz base freq)
+		   PWM runs on pin at selected base frequency
+		   Duty cycle set by loading value into OCR0A */
+
 	while (1) 
 	{
-	
-		if(!(PINC & 0b00000001)){
+		// Read analog input
+		ADCSRA = ADCSRA | 0b01000000;
+			// ADCSRA |= (1 << ADSC); // Alternate code: ADCSRA = ADCSRA | 0b01000000;
+			// Start Analog to Digital conversion
+		while ((ADCSRA & 0b00010000) == 0); // Alternate code: while ((ADCSRA & (1<<ADIF)) ==0);
+			// wait for conversion to finish (can take a few msec)
+		sensorvalue = ADCH; // Keep high bits of 10-bit result (throw away lowest two bits which are stored in ADCL)
+
+	// DC motor chunk
+		if (sensorvalue >= 204) { // Fast Forwards
+			PORTC = PORTC & 0b11101111; // (PORTC | 0b00000000) & 0b11101111; // turn on PC4 - LED 5
+			PORTD = 0b00100000; // Motor Forwards, Sets PD5 to on (connected to M1 forward (P5 on H-bridge))
+			OCR0A = (sensorvalue - 127)*2; // 255 = motor duty cycle at 100%
+			//wait(50);
+		}
+		else if (sensorvalue >= 153){ // Slow Forwards
+			PORTC = PORTC & 0b11110111; // turn on PC3 - LED 4
+			PORTD = 0b00100000;// Motor Forwards
+			OCR0A = (sensorvalue - 127)*2; // increase duty cycle linearly
+			//wait(50);
+		}
+		else if (sensorvalue >= 102){ // Stop
+			PORTC = PORTC & 0b11111011; // turn on PC2 - LED 3
+			PORTD = 0b00000000; //  Motor Stop, Sets PD7 and PD5 to off (connected to M1 reverse (P7 and P5 on H-bridge))
+			OCR0A = 0; // 0 = Motor Off
+			//wait(50);
+		}
+		else if (sensorvalue >= 51){ // Slow Backwards
+			PORTC = PORTC & 0b11111101; // turn on PC1 - LED 2
+			PORTD = 0b10000000; //  Motor Backwards, Sets PD7 to on (connected to M1 reverse (P7 on H-bridge))
+			OCR0A = (127 - sensorvalue)*2; // increase duty cycle linearly
+			//wait(50);
+		}
+		else if (sensorvalue <51) { // Fast Backwards
+			PORTC = PORTC & 0b11111110; // turn on PC0 - LED 1
+			PORTD = 0b10000000; // Motor Backwards
+			OCR0A = (127 - sensorvalue)*2; // 255 = motor duty cycle at 100%
+			//wait(50);
+		} // ends elseif's for DC motor
+
+	// Stepper Motor Chunk
+		if(!(PINC & 0b00000001)){ // Stepper Motor if statement
 			
 			// Routine for Lab Assignment
 			for(int i=0; i<36; i++){ // 270/7.5
