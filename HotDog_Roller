@@ -6,15 +6,17 @@
  */ 
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
 
 // Clock Frequencies
 #define FREQ_CLOCK 1000000
 
 // Function Declarations
-void step_CW (void);
-void step_CCW (void);
 void wait (volatile int multiple, volatile char time_choice);
 void delay_T_msec_timer0 (char choice);
+void change_led_state(char initialstate);
+void step_CW (void);
+void step_CCW (void);
 
 // Global Variables
 char sensorvalue = 0;// value read from analog sensor (0-255 since we'll only read the upper 8 bits of the 10-bit number)
@@ -37,11 +39,15 @@ int main(void)
 	DDRC = 0b00000000;  // set bit PC0 as input for the switch
 	DDRD = 0b11110000;  // set bits PD7-PC4 as output for the stepper motor
 		// Follows a practice of making unused pins to be input (safer)
-	
 	// Ports - Set or Clear Bits for stepper motor
 	PORTB = 0b00000011; // set output bits on PORTB so that all outputs are off (wired as active low)
 	PORTC = 0b00000001; // set output bits on PORTC so that input is off (wired as active low)
 	PORTD = 0b11110000; // set output bits on PORTD so that all outputs are off (wired as active low)
+
+	// Set up interrupts
+	EICRA = 1 << ISC01 | 1 << ISC00 | 1 << ISC11 | 1 << ISC10; // triggers INT0 and INT1 on rising edge
+	EIMSK = 1 << INT1 | 1 << INT0; // enable INT1 and INT0
+	sei(); // enable global interrupt
 
 	// Set up ADC
 	PRR = 0x00;
@@ -150,64 +156,28 @@ int main(void)
 return 0;
 } // end main function
 
-void step_CCW()
-{
-	// This function advances the motor counter-clockwise one step.
-	// Follow the full-wave stepping table in Stepper Motor Control.ppt for MEMS 1049 course.
-	// phase1a = PORTD_7, phase1b = PORTD_6
-	// phase2a = PORTD_5, phase2b = PORTD_4
-
-	switch (phase_step) {
-		case 1:
-		// step to 2
-		PORTD = 0b00010000;
-		phase_step = 2;
-		break;
-		case 2:
-		// step to 3
-		PORTD = 0b01000000;
-		phase_step = 3;
-		break;
-		case 3:
-		// step to 4;
-		PORTD = 0b00100000;
-		phase_step = 4;
-		break;
-		case 4:
-		// step to 1;
-		PORTD = 0b10000000;
-		phase_step = 1;
-	break;  }
-}// end step_CCW
-
-void step_CW() {
-	// This function advances the motor clockwise one step.  Follow the full-wave stepping table in Stepper Motor Control.ppt for MEMS 1049 course. Our stepper motor phases are assigned to Port pins as follows: phase1a = PORTD_7, phase1b = PORTD_6, phase2a = PORTD_5, phase2b = PORTD_4
-
-	switch (phase_step) {
-		
-		case 1: // step to 4
-		PORTD = 0b00100000;
-		phase_step = 4;
-		break;
-		
-		case 2: // step to 1
-		PORTD = 0b10000000;
-		phase_step = 1;
-		break;
-		
-		case 3: // step to 2;
-		PORTD = 0b00010000;
-		phase_step = 2;
-		break;
-		
-		case 4: // step to 3;
-		PORTD = 0b01000000;
-		phase_step = 3;
-		break;
-		
+//Interrupt Service Routine (ISR) for INT0 and INT1
+ISR(INT0_vect) { // frick it, it works
+	if(!(PORTC & 0b00000100)) { // checks switch 1 is closed (isn't open) at PC2
+		if(PORTD & 0b01000000) { // checks LED6 is off at PD6
+			PORTD = 0b10111111; // turns on LED at PD6
+		}
 	}
-}// end step_CW
+	wait(80); // switch debounce (waits to check switch pin status again - prevents the system perceiving double presses)
+	EIFR = 0b00000001;
+}
 
+ISR(INT1_vect) {
+	if(!(PORTC & 0b00100000)) { // checks LED 5
+		if(!(PORTD & 0b01000000)) { // checks LED6 is on at PD7
+			if(PORTD & 0b10000000) { // checks LED7 is off at PD7
+				PORTD = 0b00111111; // turns on LED at PD7
+			}
+		}
+	}
+	wait(80); // switch debounce (waits to check switch pin status again - prevents the system perceiving double presses)
+	EIFR = 0b00000010;
+}
 
 void wait(volatile int multiple, volatile char time_choice) {
 	/* This subroutine calls others to create a delay.
@@ -266,3 +236,95 @@ void delay_T_msec_timer0(volatile char choice) {
 	//TIFR0 = 0x1<<TOV0;  // Alternate while loop: Clear TOV0 (note that this is a nonintuitive bit in that it is cleared by writing a 1 to it)
 	
 } // end delay_T_msec_timer0()
+
+//LED state change function
+void change_led_state(char allstates) {
+	switch (allstates) {
+		case 'A': // LED 0
+			PORTC = 0b00111110;
+			wait(200); // feeds into delay function
+			break;
+		case 'B': // LED 1
+			PORTC = 0b00111101;
+			wait(200);
+			break;
+		case 'C': // LED 2
+			PORTC = 0b00111011;
+			wait(200);
+			break;
+		case 'D': // LED 3
+			PORTC = 0b00110111;
+			wait(200);
+			break;
+		case 'E': // LED 4
+			PORTC = 0b00101111;
+			wait(200);
+			break;
+		case 'F': // LED 5
+			PORTC = 0b00011111;
+			wait(200);
+			break;
+		default: // functions as a Case 'G' in the pattern
+			PORTC = 0b11111111;
+			wait(200);
+			break;
+	}
+}
+
+void step_CCW()
+{
+	// This function advances the motor counter-clockwise one step.
+	// Follow the full-wave stepping table in Stepper Motor Control.ppt for MEMS 1049 course.
+	// phase1a = PORTD_7, phase1b = PORTD_6
+	// phase2a = PORTD_5, phase2b = PORTD_4
+
+	switch (phase_step) {
+		case 1:
+		// step to 2
+		PORTD = 0b00010000;
+		phase_step = 2;
+		break;
+		case 2:
+		// step to 3
+		PORTD = 0b01000000;
+		phase_step = 3;
+		break;
+		case 3:
+		// step to 4;
+		PORTD = 0b00100000;
+		phase_step = 4;
+		break;
+		case 4:
+		// step to 1;
+		PORTD = 0b10000000;
+		phase_step = 1;
+	break;  }
+}// end step_CCW
+
+void step_CW() {
+	// This function advances the motor clockwise one step.  Follow the full-wave stepping table in Stepper Motor Control.ppt for MEMS 1049 course. Our stepper motor phases are assigned to Port pins as follows: phase1a = PORTD_7, phase1b = PORTD_6, phase2a = PORTD_5, phase2b = PORTD_4
+
+	switch (phase_step) {
+		
+		case 1: // step to 4
+		PORTD = 0b00100000;
+		phase_step = 4;
+		break;
+		
+		case 2: // step to 1
+		PORTD = 0b10000000;
+		phase_step = 1;
+		break;
+		
+		case 3: // step to 2;
+		PORTD = 0b00010000;
+		phase_step = 2;
+		break;
+		
+		case 4: // step to 3;
+		PORTD = 0b01000000;
+		phase_step = 3;
+		break;
+		
+	}
+}// end step_CW
