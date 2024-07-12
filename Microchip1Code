@@ -67,18 +67,6 @@ int main(void)
 		   select left justification (bit 5 of ADMUX = ADLAR = 1)
 		   select channel 0 (bits 3-0 of ADMUX = MUX3-MUX0 = 101 [not 000]) // channel PC5 */
 
-	// Set Up Pulse Width Modulation for DC motor
-	OCR0A = 0x00;
-		// At PD6, Load 0 into OCR0A to set initial duty cycle to 0 (motor off)
-	TCCR0A = 0b10000011;
-		/* Set non-inverting mode on OC0A - PD6 pin with Fast PWM (WGM = 11)
-		   Note: does not affect OC0B because COMB0:1 bits stay at default (= 00)
-		   COMOB1 and COMBO set to 00 so PD5 is used to control motor direction */
-	TCCR0B = 0b00000011;
-		/* Set base PWM frequency (CS02:0 bits 2-0 = 011 for prescaler = 64, approx. 1kHz base freq)
-		   PWM runs on pin at selected base frequency
-		   Duty cycle set by loading value into OCR0A */
-
 	while(1)
 	{
 
@@ -121,6 +109,39 @@ int main(void)
 			OCR0A = (127 - sensorvalue)*2; // 255 = motor duty cycle at 100%
 			//wait(50);
 		} // ends elseif's for DC motor
+
+		// Stepper Motor Chunk
+		if(!(PINC & 0b00000001)){ // Stepper Motor if statement
+			
+			// Routine for Lab Assignment
+			for(int i=0; i<36; i++){ // 270/7.5
+				PORTB = PORTB & 0b00000010;
+				step_CW(); //step_CW() // 7.5 degrees
+				wait(56,2); // delay so that motor doesn't skip steps and makes it go for the full 2 seconds
+			}
+			
+			PORTB = 0b00000011;
+			wait(500,2); // delay so that motor doesn't skip steps
+			
+			for(int i=0; i<12; i++){ // 270/7.5
+				PORTB = PORTB & 0b00000001;
+				step_CCW(); //step_CCW()
+				wait(83,2); // delay so that motor doesn't skip steps
+			}
+			
+			PORTB = 0b00000011;
+			wait(500,2); // delay so that motor doesn't skip steps
+			
+			for(int i=0; i<24; i++){ // 270/7.5
+				PORTB = PORTB & 0b00000010;
+				step_CW(); //step_CW()
+				wait(83,2); // delay so that motor doesn't skip steps
+			}
+			
+			PORTB = 0b00000011;
+			wait(100,2); // delay so that motor doesn't skip steps
+			
+		} // end stepper motor if
 
 	} // end main while
 
