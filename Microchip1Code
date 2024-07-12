@@ -27,7 +27,7 @@ int phase_step = 1; // We will use wave stepping, so the steps are numbered 1-4,
 
 int main(void)
 {
-	// Data Registries - IO for MC1
+	// Data Registries - IO
 		// Follows a practice of making unused pins to be input (safer)
 	DDRB = 0b11111111;
 		// set bits PB7-0 as output for relay idk about this might need to fix for relay
@@ -41,7 +41,7 @@ int main(void)
 		// set PD2 and PD3 for interupts
 		// set PD7-PD4 as inputs for temperature sensor
 
-	// Ports - Set or Clear for DC motor
+	// Ports - Set or Clear
 	PORTB = 0b11111111; // set output bits on PORTB so that all outputs are off (wired as active low) might need to fix for relay
 	PORTC = 0b00011111; // set output bits on PORTC so that all outputs are off (wired as active low)
 	PORTD = 0b00000011; // set output bits so that all outputs are off
@@ -50,6 +50,22 @@ int main(void)
 	EICRA = 1 << ISC01 | 1 << ISC00 | 1 << ISC11 | 1 << ISC10; // triggers INT0 and INT1 on rising edge
 	EIMSK = 1 << INT1 | 1 << INT0; // enable INT1 and INT0
 	sei(); // enable global interrupt
+
+	// Set up ADC for temperature sensor
+	PRR = 0x00;
+		/* clear Power Reduction ADC bit (0) in PRR register
+		   this register can stop the clock at individual peripherals to reduce power consumption */
+	ADCSRA = 0b10000111;
+	//ADCSRA = 1 << ADEN | 1 << ADPS2 | 1 << ADPS1 | 1 << ADPS0;
+		/* can also use = 0x87 or 0b10000111
+		   sets ADC Enable bit (7) in ADCSRA register (ADEN)
+		   set ADC prescaler to 128 (bits 2-0 of ADCSRA = ADPS2-ADPS0 = 111)
+		   ADPSI0-2 are auto trigger source, 1-1-1 is TIMER/COUNTER1 capture event */
+	ADMUX = 0b01100101; // 0 << REFS1 | 1 << REFS0 | 1 << ADLAR | 1 << MUX3 | 1 << MUX0;
+		/* can also use = 0x60 or 0b01100101 [not 0b01100000];
+		   select Analog Reference voltage to be AVcc (bits 7-6 of ADMUX = 01)
+		   select left justification (bit 5 of ADMUX = ADLAR = 1)
+		   select channel 0 (bits 3-0 of ADMUX = MUX3-MUX0 = 101 [not 000]) // channel PC5 */
 
 	while(1)
 	{
