@@ -27,7 +27,7 @@ int phase_step = 1; // We will use wave stepping, so the steps are numbered 1-4,
 
 int main(void)
 {
-	// Data Registries - IO for MC2
+	// Data Registries - IO
 		// Follows a practice of making unused pins to be input (safer)
 	DDRB = 0b00000001;
 		// set bit PB0 as output for the green LEDs
@@ -37,6 +37,7 @@ int main(void)
 	DDRD = 0b11110000;
 		// set PD2 and PD3 for interupts
 		// set bits PD7-PD4 as output for the stepper motor
+
 	// Ports - Set or Clear Bits for stepper motor
 	PORTB = 0b00000001; // set output bits on PORTB so that all outputs are off (wired as active low)
 	PORTC = 0b11111111; // set output bits on PORTC so that input is off (wired as active low)
@@ -46,6 +47,18 @@ int main(void)
 	EICRA = 1 << ISC01 | 1 << ISC00 | 1 << ISC11 | 1 << ISC10; // triggers INT0 and INT1 on rising edge
 	EIMSK = 1 << INT1 | 1 << INT0; // enable INT1 and INT0
 	sei(); // enable global interrupt
+
+	// Set Up Pulse Width Modulation for DC motor
+	OCR0A = 0x00;
+		// At PD6, Load 0 into OCR0A to set initial duty cycle to 0 (motor off)
+	TCCR0A = 0b10000011;
+		/* Set non-inverting mode on OC0A - PD6 pin with Fast PWM (WGM = 11)
+		   Note: does not affect OC0B because COMB0:1 bits stay at default (= 00)
+		   COMOB1 and COMBO set to 00 so PD5 is used to control motor direction */
+	TCCR0B = 0b00000011;
+		/* Set base PWM frequency (CS02:0 bits 2-0 = 011 for prescaler = 64, approx. 1kHz base freq)
+		   PWM runs on pin at selected base frequency
+		   Duty cycle set by loading value into OCR0A */
 
 	while(1)
 	{
