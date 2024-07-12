@@ -81,6 +81,7 @@ int main(void)
 			// wait for conversion to finish (can take a few msec)
 		sensorvalue = ADCH; // Keep high bits of 10-bit result (throw away lowest two bits which are stored in ADCL)
 
+/*
 		// DC motor chunk
 		if (sensorvalue >= 204) { // Fast Forwards
 			PORTC = 0b11101111; // (PORTC | 0b00000000) & 0b11101111; // turn on PC4 - LED 5
@@ -140,6 +141,7 @@ int main(void)
 			wait(100,2); // delay so that motor doesn't skip steps
 			
 		} // end stepper motor if
+*/
 
 	} // end main while
 
@@ -236,6 +238,7 @@ void delay_T_msec_timer0(volatile char choice) {
 	
 } // end delay_T_msec_timer0()
 
+/*
 //LED state change function
 void change_led_state(char allstates) {
 	switch (allstates) {
@@ -327,3 +330,4 @@ void step_CW() {
 		
 	}
 }// end step_CW
+*/
