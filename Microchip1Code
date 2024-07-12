@@ -34,9 +34,9 @@ int main(void)
 	DDRC = 0b00000011;
 		// set PC0 as output for yellow LED (wired)
 		// set PC1 as output for red LED (wired)
+		// set PC2 as input for button
 		// set PC4 as input for temperature sensor
 		// set PC5 (ADC5) as input for analog for temperature sensor
-		// set PC6 as input for button
 	DDRD = 0b11110011;
 		// set PD2 and PD3 for interupts
 		// set bits PD7-PD4 as outputs for stepper motor
