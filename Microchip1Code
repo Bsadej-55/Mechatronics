@@ -67,6 +67,18 @@ int main(void)
 		   select left justification (bit 5 of ADMUX = ADLAR = 1)
 		   select channel 0 (bits 3-0 of ADMUX = MUX3-MUX0 = 101 [not 000]) // channel PC5 */
 
+	// Set Up Pulse Width Modulation for DC motor
+	OCR0A = 0x00;
+		// At PD6, Load 0 into OCR0A to set initial duty cycle to 0 (motor off)
+	TCCR0A = 0b10000011;
+		/* Set non-inverting mode on OC0A - PD6 pin with Fast PWM (WGM = 11)
+		   Note: does not affect OC0B because COMB0:1 bits stay at default (= 00)
+		   COMOB1 and COMBO set to 00 so PD5 is used to control motor direction */
+	TCCR0B = 0b00000011;
+		/* Set base PWM frequency (CS02:0 bits 2-0 = 011 for prescaler = 64, approx. 1kHz base freq)
+		   PWM runs on pin at selected base frequency
+		   Duty cycle set by loading value into OCR0A */
+
 	while(1)
 	{
 
