@@ -46,8 +46,8 @@ int main(void)
 	PORTC = 0b00011111; // set output bits on PORTC so that all outputs are off (wired as active low)
 	PORTD = 0b00000011; // set output bits so that all outputs are off
 
-  while(1)
-  {
+	while(1)
+	{
 
-  }
+	}
 }
