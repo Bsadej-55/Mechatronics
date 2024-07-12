@@ -48,123 +48,115 @@ int main(void)
 		// set output bits on PORTC so that all outputs are off (wired as active low)
 	PORTD = 0b11110011;
 		// set output bits so that all outputs are off
-
-	// Set up interrupts
-	EICRA = 1 << ISC01 | 1 << ISC00 | 1 << ISC11 | 1 << ISC10; // triggers INT0 and INT1 on rising edge
-	EIMSK = 1 << INT1 | 1 << INT0; // enable INT1 and INT0
-	sei(); // enable global interrupt
-
-	// Set up ADC for temperature sensor
-	PRR = 0x00;
-		/* clear Power Reduction ADC bit (0) in PRR register
-		   this register can stop the clock at individual peripherals to reduce power consumption */
-	ADCSRA = 0b10000111;
-	//ADCSRA = 1 << ADEN | 1 << ADPS2 | 1 << ADPS1 | 1 << ADPS0;
-		/* can also use = 0x87 or 0b10000111
-		   sets ADC Enable bit (7) in ADCSRA register (ADEN)
-		   set ADC prescaler to 128 (bits 2-0 of ADCSRA = ADPS2-ADPS0 = 111)
-		   ADPSI0-2 are auto trigger source, 1-1-1 is TIMER/COUNTER1 capture event */
-	ADMUX = 0b01100101; // 0 << REFS1 | 1 << REFS0 | 1 << ADLAR | 1 << MUX3 | 1 << MUX0;
-		/* can also use = 0x60 or 0b01100101 [not 0b01100000];
-		   select Analog Reference voltage to be AVcc (bits 7-6 of ADMUX = 01)
-		   select left justification (bit 5 of ADMUX = ADLAR = 1)
-		   select channel 0 (bits 3-0 of ADMUX = MUX3-MUX0 = 101 [not 000]) // channel PC5 */
-
-	while(1)
-	{
-
-		// Read analog input for temperature sensor
-		ADCSRA = ADCSRA | 0b01000000;
-			// ADCSRA |= (1 << ADSC); // Alternate code: ADCSRA = ADCSRA | 0b01000000;
-			// Start Analog to Digital conversion
-		while ((ADCSRA & 0b00010000) == 0); // Alternate code: while ((ADCSRA & (1<<ADIF)) ==0);
-			// wait for conversion to finish (can take a few msec)
-		sensorvalue = ADCH; // Keep high bits of 10-bit result (throw away lowest two bits which are stored in ADCL)
-
+	if(!(PORTC & 0b00000100)) { // if switch is pressed continue code
+		// Set up interrupts
+		EICRA = 1 << ISC01 | 1 << ISC00 | 1 << ISC11 | 1 << ISC10; // triggers INT0 and INT1 on rising edge
+		EIMSK = 1 << INT1 | 1 << INT0; // enable INT1 and INT0
+		sei(); // enable global interrupt
+	
+		// Set up ADC for temperature sensor
+		PRR = 0x00;
+			/* clear Power Reduction ADC bit (0) in PRR register
+			   this register can stop the clock at individual peripherals to reduce power consumption */
+		ADCSRA = 0b10000111;
+		//ADCSRA = 1 << ADEN | 1 << ADPS2 | 1 << ADPS1 | 1 << ADPS0;
+			/* can also use = 0x87 or 0b10000111
+			   sets ADC Enable bit (7) in ADCSRA register (ADEN)
+			   set ADC prescaler to 128 (bits 2-0 of ADCSRA = ADPS2-ADPS0 = 111)
+			   ADPSI0-2 are auto trigger source, 1-1-1 is TIMER/COUNTER1 capture event */
+		ADMUX = 0b01100101; // 0 << REFS1 | 1 << REFS0 | 1 << ADLAR | 1 << MUX3 | 1 << MUX0;
+			/* can also use = 0x60 or 0b01100101 [not 0b01100000];
+			   select Analog Reference voltage to be AVcc (bits 7-6 of ADMUX = 01)
+			   select left justification (bit 5 of ADMUX = ADLAR = 1)
+			   select channel 0 (bits 3-0 of ADMUX = MUX3-MUX0 = 101 [not 000]) // channel PC5 */
+	
+		while(1)
+		{
+	
+			// Read analog input for temperature sensor
+			ADCSRA = ADCSRA | 0b01000000;
+				// ADCSRA |= (1 << ADSC); // Alternate code: ADCSRA = ADCSRA | 0b01000000;
+				// Start Analog to Digital conversion
+			while ((ADCSRA & 0b00010000) == 0); // Alternate code: while ((ADCSRA & (1<<ADIF)) ==0);
+				// wait for conversion to finish (can take a few msec)
+			sensorvalue = ADCH; // Keep high bits of 10-bit result (throw away lowest two bits which are stored in ADCL)
+	
 /*
-		// DC motor chunk
-		if (sensorvalue >= 204) { // Fast Forwards
-			PORTC = 0b11101111; // (PORTC | 0b00000000) & 0b11101111; // turn on PC4 - LED 5
-			PORTD = 0b00100000; // Motor Forwards, Sets PD5 to on (connected to M1 forward (P5 on H-bridge))
-			//wait(50);
-		}
-		else if (sensorvalue >= 153){ // Slow Forwards
-			PORTC = 0b11110111; // turn on PC3 - LED 4
-			PORTD = 0b00100000;// Motor Forwards
-			//wait(50);
-		}
-		else if (sensorvalue >= 102){ // Stop
-			PORTC = 0b11111011; // turn on PC2 - LED 3
-			PORTD = 0b00000000; //  Motor Stop, Sets PD7 and PD5 to off (connected to M1 reverse (P7 and P5 on H-bridge))
-			//wait(50);
-		}
-		else if (sensorvalue >= 51){ // Slow Backwards
-			PORTC = 0b11111101; // turn on PC1 - LED 2
-			PORTD = 0b10000000; //  Motor Backwards, Sets PD7 to on (connected to M1 reverse (P7 on H-bridge))
-			//wait(50);
-		}
-		else if (sensorvalue <51) { // Fast Backwards
-			PORTC = 0b11111110; // turn on PC0 - LED 1
-			PORTD = 0b10000000; // Motor Backwards
-			//wait(50);
-		} // ends elseif's for DC motor
-
-		// Stepper Motor Chunk
-		if(!(PINC & 0b00000001)){ // Stepper Motor if statement
-			
-			// Routine for Lab Assignment
-			for(int i=0; i<36; i++){ // 270/7.5
-				PORTB = PORTB & 0b00000010;
-				step_CW(); //step_CW() // 7.5 degrees
-				wait(56,2); // delay so that motor doesn't skip steps and makes it go for the full 2 seconds
+			// DC motor chunk
+			if (sensorvalue >= 204) { // Fast Forwards
+				PORTC = 0b11101111; // (PORTC | 0b00000000) & 0b11101111; // turn on PC4 - LED 5
+				PORTD = 0b00100000; // Motor Forwards, Sets PD5 to on (connected to M1 forward (P5 on H-bridge))
+				//wait(50);
 			}
-			
-			PORTB = 0b00000011;
-			wait(500,2); // delay so that motor doesn't skip steps
-			
-			for(int i=0; i<12; i++){ // 270/7.5
-				PORTB = PORTB & 0b00000001;
-				step_CCW(); //step_CCW()
-				wait(83,2); // delay so that motor doesn't skip steps
+			else if (sensorvalue >= 153){ // Slow Forwards
+				PORTC = 0b11110111; // turn on PC3 - LED 4
+				PORTD = 0b00100000;// Motor Forwards
+				//wait(50);
 			}
-			
-			PORTB = 0b00000011;
-			wait(500,2); // delay so that motor doesn't skip steps
-			
-			for(int i=0; i<24; i++){ // 270/7.5
-				PORTB = PORTB & 0b00000010;
-				step_CW(); //step_CW()
-				wait(83,2); // delay so that motor doesn't skip steps
+			else if (sensorvalue >= 102){ // Stop
+				PORTC = 0b11111011; // turn on PC2 - LED 3
+				PORTD = 0b00000000; //  Motor Stop, Sets PD7 and PD5 to off (connected to M1 reverse (P7 and P5 on H-bridge))
+				//wait(50);
 			}
-			
-			PORTB = 0b00000011;
-			wait(100,2); // delay so that motor doesn't skip steps
-			
-		} // end stepper motor if
+			else if (sensorvalue >= 51){ // Slow Backwards
+				PORTC = 0b11111101; // turn on PC1 - LED 2
+				PORTD = 0b10000000; //  Motor Backwards, Sets PD7 to on (connected to M1 reverse (P7 on H-bridge))
+				//wait(50);
+			}
+			else if (sensorvalue <51) { // Fast Backwards
+				PORTC = 0b11111110; // turn on PC0 - LED 1
+				PORTD = 0b10000000; // Motor Backwards
+				//wait(50);
+			} // ends elseif's for DC motor
+	
+			// Stepper Motor Chunk
+			if(!(PINC & 0b00000001)){ // Stepper Motor if statement
+				
+				// Routine for Lab Assignment
+				for(int i=0; i<36; i++){ // 270/7.5
+					PORTB = PORTB & 0b00000010;
+					step_CW(); //step_CW() // 7.5 degrees
+					wait(56,2); // delay so that motor doesn't skip steps and makes it go for the full 2 seconds
+				}
+				
+				PORTB = 0b00000011;
+				wait(500,2); // delay so that motor doesn't skip steps
+				
+				for(int i=0; i<12; i++){ // 270/7.5
+					PORTB = PORTB & 0b00000001;
+					step_CCW(); //step_CCW()
+					wait(83,2); // delay so that motor doesn't skip steps
+				}
+				
+				PORTB = 0b00000011;
+				wait(500,2); // delay so that motor doesn't skip steps
+				
+				for(int i=0; i<24; i++){ // 270/7.5
+					PORTB = PORTB & 0b00000010;
+					step_CW(); //step_CW()
+					wait(83,2); // delay so that motor doesn't skip steps
+				}
+				
+				PORTB = 0b00000011;
+				wait(100,2); // delay so that motor doesn't skip steps
+				
+			} // end stepper motor if
 */
-
-	} // end main while
-
+	
+		} // end main while
+	}
 return 0;
 } // end main function
 
 //Interrupt Service Routine (ISR) for INT0 and INT1
 ISR(INT0_vect) { // first button
-	if(!(PORTC & 0b00100000)) { // checks switch 1 is closed (isn't open)
-		if(!(PIND6 == 0)) { // checks if motor is off
-			PIND & (0 << PIND7);
-			PIND & (0 << PIND6);
-			PIND & (0 << PIND5);
-			PIND & (0 << PIND4);
-		}
-		else if(!(PIND6 == 1)) { // checks if motor is on
-			PIND & (1 << PIND7);
-			PIND & (1 << PIND6);
-			PIND & (1 << PIND5);
-			PIND & (1 << PIND4);
-		}
+	if(!(PORTC & 0b00000100)) { // checks switch 1 is closed (isn't open)
+		PIND & (0 << PIND7);
+		PIND & (0 << PIND6);
+		PIND & (0 << PIND5);
+		PIND & (0 << PIND4);
 	}
-	wait(80); // switch debounce (waits to check switch pin status again - prevents the system perceiving double presses)
+	wait(80,2); // switch debounce (waits to check switch pin status again - prevents the system perceiving double presses)
 	EIFR = 0b00000001;
 }
 
@@ -176,7 +168,7 @@ ISR(INT0_vect) { // first button
 			}
 		}
 	}
-	wait(80); // switch debounce (waits to check switch pin status again - prevents the system perceiving double presses)
+	wait(80,2); // switch debounce (waits to check switch pin status again - prevents the system perceiving double presses)
 	EIFR = 0b00000010;
 } */
 
