@@ -147,17 +147,26 @@ return 0;
 } // end main function
 
 //Interrupt Service Routine (ISR) for INT0 and INT1
-ISR(INT0_vect) {
-	if(!(PORTC & 0b00000100)) { // checks switch 1 is closed (isn't open) at PC2
-		if(PORTD & 0b01000000) { // checks LED6 is off at PD6
-			PORTD = 0b10111111; // turns on LED at PD6
+ISR(INT0_vect) { // first button
+	if(!(PORTC & 0b00100000)) { // checks switch 1 is closed (isn't open)
+		if(!(PIND6 == 0)) { // checks if motor is off
+			PIND & (0 << PIND7);
+			PIND & (0 << PIND6);
+			PIND & (0 << PIND5);
+			PIND & (0 << PIND4);
+		}
+		else if(!(PIND6 == 1)) { // checks if motor is on
+			PIND & (1 << PIND7);
+			PIND & (1 << PIND6);
+			PIND & (1 << PIND5);
+			PIND & (1 << PIND4);
 		}
 	}
 	wait(80); // switch debounce (waits to check switch pin status again - prevents the system perceiving double presses)
 	EIFR = 0b00000001;
 }
 
-ISR(INT1_vect) {
+/* ISR(INT1_vect) { // temperature sensor
 	if(!(PORTC & 0b00100000)) { // checks LED 5
 		if(!(PORTD & 0b01000000)) { // checks LED6 is on at PD7
 			if(PORTD & 0b10000000) { // checks LED7 is off at PD7
@@ -167,7 +176,7 @@ ISR(INT1_vect) {
 	}
 	wait(80); // switch debounce (waits to check switch pin status again - prevents the system perceiving double presses)
 	EIFR = 0b00000010;
-}
+} */
 
 void wait(volatile int multiple, volatile char time_choice) {
 	/* This subroutine calls others to create a delay.
