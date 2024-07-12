@@ -1,1 +1,34 @@
+/*
+ * Atmega328Pproject.c
+ *
+ * Created: 7/10/2024
+ * Author : Team 1
+ */ 
 
+#include <avr/io.h>
+#include <avr/interrupt.h>
+
+// Clock Frequencies
+#define FREQ_CLOCK 1000000
+
+// Function Declarations
+void wait (volatile int multiple, volatile char time_choice);
+void delay_T_msec_timer0 (char choice);
+void change_led_state(char initialstate);
+void step_CW (void);
+void step_CCW (void);
+
+// Global Variables
+char sensorvalue = 0;// value read from analog sensor (0-255 since we'll only read the upper 8 bits of the 10-bit number)
+volatile int number_of_msec = 200;
+volatile char register_B_setting;
+volatile char timer_preload;
+int phase_step = 1; // We will use wave stepping, so the steps are numbered 1-4, then will repeat.
+
+int main(void)
+{
+
+	while(1)
+  {
+  }
+}
