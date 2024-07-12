@@ -31,15 +31,15 @@ int main(void)
 		// Follows a practice of making unused pins to be input (safer)
 	DDRB = 0b11111111;
 		// set bits PB7-0 as output for relay idk about this might need to fix for relay
-	DDRC = 0b00011111;
-		// set bits PC4-PC0 as output for DC motor
-		// PC5 (ADC5) as input for analog
+	DDRC = 0b00000011;
+		// set PC0 as output for yellow LED
+		// set PC1 as output for red LED
+		// set PC4 as input for temperature sensor
+		// set PC5 (ADC5) as input for analog for temperature sensor
 		// set PC6 as input for button
 	DDRD = 0b11110011;
-		// set bit PD0 as output for yellow LED
-		// set PD1 as output for red LED
 		// set PD2 and PD3 for interupts
-		// set PD7-PD4 as outputs for stepper motor
+		// set bits PD7-PD4 as outputs for stepper motor
 
 	// Ports - Set or Clear
 	PORTB = 0b11111111;
