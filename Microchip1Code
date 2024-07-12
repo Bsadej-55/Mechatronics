@@ -50,6 +50,7 @@ int main(void)
 	EICRA = 1 << ISC01 | 1 << ISC00 | 1 << ISC11 | 1 << ISC10; // triggers INT0 and INT1 on rising edge
 	EIMSK = 1 << INT1 | 1 << INT0; // enable INT1 and INT0
 	sei(); // enable global interrupt
+
 	while(1)
 	{
 
