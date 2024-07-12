@@ -35,11 +35,11 @@ int main(void)
 		// set bits PC4-PC0 as output for DC motor
 		// PC5 (ADC5) as input for analog
 		// set PC6 as input for button
-	DDRD = 0b00000011;
+	DDRD = 0b11110011;
 		// set bit PD0 as output for yellow LED
 		// set PD1 as output for red LED
 		// set PD2 and PD3 for interupts
-		// set PD7-PD4 as inputs for temperature sensor
+		// set PD7-PD4 as outputs for stepper motor
 
 	// Ports - Set or Clear
 	PORTB = 0b11111111;
