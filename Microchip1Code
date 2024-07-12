@@ -147,7 +147,7 @@ return 0;
 } // end main function
 
 //Interrupt Service Routine (ISR) for INT0 and INT1
-ISR(INT0_vect) { // frick it, it works
+ISR(INT0_vect) {
 	if(!(PORTC & 0b00000100)) { // checks switch 1 is closed (isn't open) at PC2
 		if(PORTD & 0b01000000) { // checks LED6 is off at PD6
 			PORTD = 0b10111111; // turns on LED at PD6
