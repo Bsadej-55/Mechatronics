@@ -70,7 +70,7 @@ int main(void)
 	while(1)
 	{
 
-		// Read analog input
+		// Read analog input for temperature sensor
 		ADCSRA = ADCSRA | 0b01000000;
 			// ADCSRA |= (1 << ADSC); // Alternate code: ADCSRA = ADCSRA | 0b01000000;
 			// Start Analog to Digital conversion
