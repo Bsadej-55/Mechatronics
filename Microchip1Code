@@ -90,6 +90,37 @@ int main(void)
 			// wait for conversion to finish (can take a few msec)
 		sensorvalue = ADCH; // Keep high bits of 10-bit result (throw away lowest two bits which are stored in ADCL)
 
+		// DC motor chunk
+		if (sensorvalue >= 204) { // Fast Forwards
+			PORTC = PORTC & 0b11101111; // (PORTC | 0b00000000) & 0b11101111; // turn on PC4 - LED 5
+			PORTD = 0b00100000; // Motor Forwards, Sets PD5 to on (connected to M1 forward (P5 on H-bridge))
+			OCR0A = (sensorvalue - 127)*2; // 255 = motor duty cycle at 100%
+			//wait(50);
+		}
+		else if (sensorvalue >= 153){ // Slow Forwards
+			PORTC = PORTC & 0b11110111; // turn on PC3 - LED 4
+			PORTD = 0b00100000;// Motor Forwards
+			OCR0A = (sensorvalue - 127)*2; // increase duty cycle linearly
+			//wait(50);
+		}
+		else if (sensorvalue >= 102){ // Stop
+			PORTC = PORTC & 0b11111011; // turn on PC2 - LED 3
+			PORTD = 0b00000000; //  Motor Stop, Sets PD7 and PD5 to off (connected to M1 reverse (P7 and P5 on H-bridge))
+			OCR0A = 0; // 0 = Motor Off
+			//wait(50);
+		}
+		else if (sensorvalue >= 51){ // Slow Backwards
+			PORTC = PORTC & 0b11111101; // turn on PC1 - LED 2
+			PORTD = 0b10000000; //  Motor Backwards, Sets PD7 to on (connected to M1 reverse (P7 on H-bridge))
+			OCR0A = (127 - sensorvalue)*2; // increase duty cycle linearly
+			//wait(50);
+		}
+		else if (sensorvalue <51) { // Fast Backwards
+			PORTC = PORTC & 0b11111110; // turn on PC0 - LED 1
+			PORTD = 0b10000000; // Motor Backwards
+			OCR0A = (127 - sensorvalue)*2; // 255 = motor duty cycle at 100%
+			//wait(50);
+		} // ends elseif's for DC motor
 
 	}
 }
