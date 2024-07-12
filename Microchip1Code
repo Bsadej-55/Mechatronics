@@ -1,1 +1,53 @@
+/*
+ * Atmega328Pproject.c
+ *
+ * Created: 7/10/2024
+ * Author : Team 1
+ */ 
 
+#include <avr/io.h>
+#include <avr/interrupt.h>
+
+// Clock Frequencies
+#define FREQ_CLOCK 1000000
+
+// Function Declarations
+void wait (volatile int multiple, volatile char time_choice);
+void delay_T_msec_timer0 (char choice);
+void change_led_state(char initialstate);
+void step_CW (void);
+void step_CCW (void);
+
+// Global Variables
+char sensorvalue = 0;// value read from analog sensor (0-255 since we'll only read the upper 8 bits of the 10-bit number)
+volatile int number_of_msec = 200;
+volatile char register_B_setting;
+volatile char timer_preload;
+int phase_step = 1; // We will use wave stepping, so the steps are numbered 1-4, then will repeat.
+
+int main(void)
+{
+	// Data Registries - IO for MC1
+		// Follows a practice of making unused pins to be input (safer)
+	DDRB = 0b11111111;
+		// set bits PB7-0 as output for relay idk about this might need to fix for relay
+	DDRC = 0b00011111;
+		// set bits PC4-PC0 as output for DC motor
+		// PC5 (ADC5) as input for analog
+		// set PC6 as input for button
+	DDRD = 0b00000011;
+		// set bit PD0 as output for yellow LED
+		// set PD1 as output for red LED
+		// set PD2 and PD3 for interupts
+		// set PD7-PD4 as inputs for temperature sensor
+
+	// Ports - Set or Clear for DC motor
+	PORTB = 0b11111111; // set output bits on PORTB so that all outputs are off (wired as active low) might need to fix for relay
+	PORTC = 0b00011111; // set output bits on PORTC so that all outputs are off (wired as active low)
+	PORTD = 0b00000011; // set output bits so that all outputs are off
+
+  while(1)
+  {
+
+  }
+}
