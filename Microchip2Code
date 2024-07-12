@@ -50,6 +50,37 @@ int main(void)
 
 	while(1)
 	{
-
+		// Stepper Motor Chunk
+		if(!(PINC & 0b00000001)){ // Stepper Motor if statement
+			
+			// Routine for Lab Assignment
+			for(int i=0; i<36; i++){ // 270/7.5
+				PORTB = PORTB & 0b00000010;
+				step_CW(); //step_CW() // 7.5 degrees
+				wait(56,2); // delay so that motor doesn't skip steps and makes it go for the full 2 seconds
+			}
+			
+			PORTB = 0b00000011;
+			wait(500,2); // delay so that motor doesn't skip steps
+			
+			for(int i=0; i<12; i++){ // 270/7.5
+				PORTB = PORTB & 0b00000001;
+				step_CCW(); //step_CCW()
+				wait(83,2); // delay so that motor doesn't skip steps
+			}
+			
+			PORTB = 0b00000011;
+			wait(500,2); // delay so that motor doesn't skip steps
+			
+			for(int i=0; i<24; i++){ // 270/7.5
+				PORTB = PORTB & 0b00000010;
+				step_CW(); //step_CW()
+				wait(83,2); // delay so that motor doesn't skip steps
+			}
+			
+			PORTB = 0b00000011;
+			wait(100,2); // delay so that motor doesn't skip steps
+			
+		} // end stepper motor if
 	}
 }
