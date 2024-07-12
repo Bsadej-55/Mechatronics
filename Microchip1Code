@@ -70,5 +70,14 @@ int main(void)
 	while(1)
 	{
 
+		// Read analog input
+		ADCSRA = ADCSRA | 0b01000000;
+			// ADCSRA |= (1 << ADSC); // Alternate code: ADCSRA = ADCSRA | 0b01000000;
+			// Start Analog to Digital conversion
+		while ((ADCSRA & 0b00010000) == 0); // Alternate code: while ((ADCSRA & (1<<ADIF)) ==0);
+			// wait for conversion to finish (can take a few msec)
+		sensorvalue = ADCH; // Keep high bits of 10-bit result (throw away lowest two bits which are stored in ADCL)
+
+
 	}
 }
