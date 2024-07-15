@@ -2,7 +2,7 @@
  * Lab_7_MEMS1049_BNS55.cpp
  *
  * Created: 7/2/2024 6:31:26 PM
- * Author : Brittany Sadej
+ * Author : Team 1
  */ 
 
 #include <avr/io.h>
