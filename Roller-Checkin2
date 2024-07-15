@@ -2,7 +2,7 @@
  * Lab_7_MEMS1049_BNS55.cpp
  *
  * Created: 7/2/2024 6:31:26 PM
- * Author : Brittany Sadej
+ * Author : Team 1
  */ 
 
 #include <avr/io.h>
@@ -32,18 +32,21 @@ int main(void)
     {
 		if (!(PINB & 0b00000010))	// switch is pressed
 		{
-			// move 270 deg CW in 2 seconds & have led 1 (PB0) on
-			for (int i = 0; i<1000; i++) {
-				step_CCW();
-				wait(5, 1);
-			}
-			
-			wait(500, 1);	// wait 0.5 sec
-			
-			// move 90 deg CCW in 1 second & have led 2 (PB1) on
-			for (int i = 0; i<1000; i++) {
-				step_CW();
-				wait(6,1);
+			while(1)
+			{
+				// move 270 deg CW in 2 seconds & have led 1 (PB0) on
+				for (int i = 0; i<1000; i++) {
+					step_CCW();
+					wait(5, 1);
+				}
+				
+				wait(500, 1);	// wait 0.5 sec
+				
+				// move 90 deg CCW in 1 second & have led 2 (PB1) on
+				for (int i = 0; i<1000; i++) {
+					step_CW();
+					wait(6,1);
+				}
 			}
 		}
     }
