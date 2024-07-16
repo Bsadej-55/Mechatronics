@@ -30,28 +30,25 @@ int main(void)
 
 	while (1)
 	{
-		for(int i=1; i<180; i++)
+		for(int LEDstates = 1; LEDstates < 3; LEDstates ++)
 		{
-			send_to_MAX7221(0b00001100,0b00000001); //turn on the display
-
-			send_to_MAX7221(0b00000001,0b00000000);	//0 in binary on display 1
-			send_to_MAX7221(0b00000010,0b00000111); //7 in binary on display 2
-			wait(500);
-			
-			send_to_MAX7221(0b00000001,0b00000001); //1 in binary on display 1
-			send_to_MAX7221(0b00000010,0b00000110); //6 in binary on display 2
-			wait(500);
-			
-			send_to_MAX7221(0b00001100,0b00000000); //turn off
-			wait(2000); //wait 2 seconds
+			for(int LEDstates = 1; LEDstates < 6; LEDstates ++)
+			{
+				for(int LEDstates = 1; LEDstates < 10; LEDstates ++)
+				{
+					change_led_display1_state(char LEDstates)
+					wait(1000);
+				}
+			}
 		}
 		
-	}	//end while(1)
+		send_to_MAX7221(0b00001100,0b00000000); //turn off
+	} //end while(1)
 	
-}	// end main
+} // end main
 
-void change_led_display1_state(char allstates) {
-	switch (allstates) {
+void change_led_display1_state(char LEDstates) {
+	switch (LEDstates) {
 		case 'A': // LED Display 1 = 0
 			send_to_MAX7221(0b00000001,0b00000000);	// 0 in binary on display 1
 			break;
@@ -89,8 +86,8 @@ void change_led_display1_state(char allstates) {
 	}
 } // end display 1
 
-void change_led_display1_state(char allstates) {
-	switch (allstates) {
+void change_led_display1_state(char LEDstates) {
+	switch (LEDstates) {
 		case 'A': // LED Display 2 = 0
 			send_to_MAX7221(0b00000010,0b00000000);	// 0 in binary on display 1
 			break;
@@ -128,8 +125,8 @@ void change_led_display1_state(char allstates) {
 	}
 } // end display 2
 
-void change_led_display1_state(char allstates) {
-	switch (allstates) {
+void change_led_display1_state(char LEDstates) {
+	switch (LEDstates) {
 		case 'A': // LED Display 3 = 0
 			send_to_MAX7221(0b00000011,0b00000000);	// 0 in binary on display 1
 			break;
