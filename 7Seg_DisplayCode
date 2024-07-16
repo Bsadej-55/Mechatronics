@@ -56,31 +56,31 @@ void change_led_display1_state(char allstates) {
 			send_to_MAX7221(0b00000001,0b00000000);	// 0 in binary on display 1
 			break;
 		case 'B': // LED Display 1 = 1
-			send_to_MAX7221(0b00000001,0b00000001);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000001,0b00000001);	// 1 in binary on display 1
 			break;
 		case 'C': // LED Display 1 = 2
-			send_to_MAX7221(0b00000001,0b00000010);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000001,0b00000010);	// 2 in binary on display 1
 			break;
 		case 'D': // LED Display 1 = 3
-			send_to_MAX7221(0b00000001,0b00000011);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000001,0b00000011);	// 3 in binary on display 1
 			break;
 		case 'E': // LED Display 1 = 4
-			send_to_MAX7221(0b00000001,0b00000100);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000001,0b00000100);	// 4 in binary on display 1
 			break;
 		case 'F': // LED Display 1 = 5
-			send_to_MAX7221(0b00000001,0b00000101);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000001,0b00000101);	// 5 in binary on display 1
 			break;
 		case 'G': // LED Display 1 = 6
-			send_to_MAX7221(0b00000001,0b00000110);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000001,0b00000110);	// 6 in binary on display 1
 			break;
 		case 'H': // LED Display 1 = 7
-			send_to_MAX7221(0b00000001,0b00000111);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000001,0b00000111);	// 7 in binary on display 1
 			break;
 		case 'I': // LED Display 1 = 8
-			send_to_MAX7221(0b00000001,0b00001000);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000001,0b00001000);	// 8 in binary on display 1
 			break;
 		case 'J': // LED Display 1 = 9
-			send_to_MAX7221(0b00000001,0b00001001);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000001,0b00001001);	// 9 in binary on display 1
 			break;
 		default: // functions as a Case 'K' in the pattern
 			PORTC = 0b11111111;
@@ -95,31 +95,31 @@ void change_led_display1_state(char allstates) {
 			send_to_MAX7221(0b00000010,0b00000000);	// 0 in binary on display 1
 			break;
 		case 'B': // LED Display 2 = 1
-			send_to_MAX7221(0b00000010,0b00000001);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000010,0b00000001);	// 1 in binary on display 1
 			break;
 		case 'C': // LED Display 2 = 2
-			send_to_MAX7221(0b00000010,0b00000010);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000010,0b00000010);	// 2 in binary on display 1
 			break;
 		case 'D': // LED Display 2 = 3
-			send_to_MAX7221(0b00000010,0b00000011);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000010,0b00000011);	// 3 in binary on display 1
 			break;
 		case 'E': // LED Display 2 = 4
-			send_to_MAX7221(0b00000010,0b00000100);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000010,0b00000100);	// 4 in binary on display 1
 			break;
 		case 'F': // LED Display 2 = 5
-			send_to_MAX7221(0b00000010,0b00000101);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000010,0b00000101);	// 5 in binary on display 1
 			break;
 		case 'G': // LED Display 2 = 6
-			send_to_MAX7221(0b00000010,0b00000110);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000010,0b00000110);	// 6 in binary on display 1
 			break;
 		case 'H': // LED Display 2 = 7
-			send_to_MAX7221(0b00000010,0b00000111);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000010,0b00000111);	// 7 in binary on display 1
 			break;
 		case 'I': // LED Display 2 = 8
-			send_to_MAX7221(0b00000010,0b00001000);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000010,0b00001000);	// 8 in binary on display 1
 			break;
 		case 'J': // LED Display 2 = 9
-			send_to_MAX7221(0b00000010,0b00001001);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000010,0b00001001);	// 9 in binary on display 1
 			break;
 		default: // functions as a Case 'K' in the pattern
 			PORTC = 0b11111111;
@@ -134,31 +134,31 @@ void change_led_display1_state(char allstates) {
 			send_to_MAX7221(0b00000011,0b00000000);	// 0 in binary on display 1
 			break;
 		case 'B': // LED Display 3 = 1
-			send_to_MAX7221(0b00000011,0b00000001);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000011,0b00000001);	// 1 in binary on display 1
 			break;
 		case 'C': // LED Display 3 = 2
-			send_to_MAX7221(0b00000011,0b00000010);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000011,0b00000010);	// 2 in binary on display 1
 			break;
 		case 'D': // LED Display 3 = 3
-			send_to_MAX7221(0b00000011,0b00000011);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000011,0b00000011);	// 3 in binary on display 1
 			break;
 		case 'E': // LED Display 3 = 4
-			send_to_MAX7221(0b00000011,0b00000100);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000011,0b00000100);	// 4 in binary on display 1
 			break;
 		case 'F': // LED Display 3 = 5
-			send_to_MAX7221(0b00000011,0b00000101);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000011,0b00000101);	// 5 in binary on display 1
 			break;
 		case 'G': // LED Display 3 = 6
-			send_to_MAX7221(0b00000011,0b00000110);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000011,0b00000110);	// 6 in binary on display 1
 			break;
 		case 'H': // LED Display 3 = 7
-			send_to_MAX7221(0b00000011,0b00000111);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000011,0b00000111);	// 7 in binary on display 1
 			break;
 		case 'I': // LED Display 3 = 8
-			send_to_MAX7221(0b00000011,0b00001000);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000011,0b00001000);	// 8 in binary on display 1
 			break;
 		case 'J': // LED Display 3 = 9
-			send_to_MAX7221(0b00000011,0b00001001);	// 0 in binary on display 1
+			send_to_MAX7221(0b00000011,0b00001001);	// 9 in binary on display 1
 			break;
 		default: // functions as a Case 'K' in the pattern
 			PORTC = 0b11111111;
