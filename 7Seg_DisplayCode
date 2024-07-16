@@ -5,19 +5,20 @@
  * Author : Team 1
  */ 
 
+
 #include <avr/io.h>
 
 // Functions
 int send_to_MAX7221(unsigned char, unsigned char);
 void wait(volatile int multiple);
-void change_led_display1_state(char LEDstates1)
-void change_led_display2_state(char LEDstates2)
-void change_led_display3_state(char LEDstates3)
+void change_led_display1_state(int LEDstates1);
+void change_led_display2_state(int LEDstates2);
+void change_led_display3_state(int LEDstates3);
 
 int main(void)
 {
 	//Setup
-	DDRD=0xFF;
+	DDRD = 0xFF;
 	DDRB = 0b00101100; //	DDRB = 1<<PORTB5 | 1<<PORTB3 | 1<<PORTB2;  // Set pins SCK, MOSI, and SS as output
 	
 	// Set up Main SPI
@@ -32,20 +33,20 @@ int main(void)
 
 	while (1)
 	{
-		for(int i = 1; i < 3; i ++)
+		for(int i = 1; i < 3; i++)
 		{
-			LEDstates3 = i - 1;
-			change_led_display3_state(char LEDstates3)
+			int LEDstates3 = i - 1;
+			change_led_display3_state(LEDstates3);
 
-			for(int i = 1; i < 6; i ++)
+			for(int j = 1; j < 6; j ++)
 			{
-				LEDstates2 = i - 1;
-				change_led_display2_state(char LEDstates2)
+				int LEDstates2 = j - 1;
+				change_led_display2_state(LEDstates2);
 
-				for(int i = 1; i < 10; i ++)
+				for(int k = 1; k < 10; k ++)
 				{
-					LEDstates1 = i - 1;
-					change_led_display1_state(char LEDstates1)
+					int LEDstates1 = k - 1;
+					change_led_display1_state(LEDstates1);
 					wait(1000);
 				}
 			}
@@ -54,9 +55,10 @@ int main(void)
 		send_to_MAX7221(0b00001100,0b00000000); //turn off
 	} //end while(1)
 	
+return(0);
 } // end main
 
-void change_led_display1_state(char LEDstates1) {
+void change_led_display1_state(int LEDstates1) {
 	switch (LEDstates1) {
 		case 0: // LED Display 1 = 0
 			send_to_MAX7221(0b00000001,0b00000000);	// 0 in binary on display 1
@@ -95,8 +97,8 @@ void change_led_display1_state(char LEDstates1) {
 	}
 } // end display 1
 
-void change_led_display1_state(char LEDstates) {
-	switch (LEDstates) {
+void change_led_display2_state(int LEDstates2) {
+	switch (LEDstates2) {
 		case 0: // LED Display 2 = 0
 			send_to_MAX7221(0b00000010,0b00000000);	// 0 in binary on display 1
 			break;
@@ -134,8 +136,8 @@ void change_led_display1_state(char LEDstates) {
 	}
 } // end display 2
 
-void change_led_display1_state(char LEDstates) {
-	switch (LEDstates) {
+void change_led_display3_state(int LEDstates3) {
+	switch (LEDstates3) {
 		case 0: // LED Display 3 = 0
 			send_to_MAX7221(0b00000011,0b00000000);	// 0 in binary on display 1
 			break;
@@ -173,7 +175,7 @@ void change_led_display1_state(char LEDstates) {
 	}
 } // end display 3
 
-int send_to_MAX7221(unsigned char command, unsigned char data){
+int send_to_MAX7221(unsigned char command, unsigned char data) {
 	PORTB = PORTB & 0b11111011; // Clear PB2, which is the SS bit, so that transmission can begin
 	
 	SPDR = command; // Send command
