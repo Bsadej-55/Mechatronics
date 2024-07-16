@@ -30,18 +30,21 @@ int main(void)
 
 	while (1)
 	{
-		send_to_MAX7221(0b00001100,0b00000001); //turn on the display
+		for(int i=1; i<180; i++)
+		{
+			send_to_MAX7221(0b00001100,0b00000001); //turn on the display
 
-		send_to_MAX7221(0b00000001,0b00000000);	//0 in binary on display 1
-		send_to_MAX7221(0b00000010,0b00000111); //7 in binary on display 2
-		wait(500);
-		
-		send_to_MAX7221(0b00000001,0b00000001); //1 in binary on display 1
-		send_to_MAX7221(0b00000010,0b00000110); //6 in binary on display 2
-		wait(500);
-		
-		send_to_MAX7221(0b00001100,0b00000000); //turn off
-		wait(2000); //wait 2 seconds
+			send_to_MAX7221(0b00000001,0b00000000);	//0 in binary on display 1
+			send_to_MAX7221(0b00000010,0b00000111); //7 in binary on display 2
+			wait(500);
+			
+			send_to_MAX7221(0b00000001,0b00000001); //1 in binary on display 1
+			send_to_MAX7221(0b00000010,0b00000110); //6 in binary on display 2
+			wait(500);
+			
+			send_to_MAX7221(0b00001100,0b00000000); //turn off
+			wait(2000); //wait 2 seconds
+		}
 		
 	}	//end while(1)
 	
