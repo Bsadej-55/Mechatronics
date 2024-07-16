@@ -1,0 +1,289 @@
+/*
+ * i2c_example.cpp
+ *
+ * Created: 4/6/2021 7:37:14 PM
+ * Author : Buddy
+ */ 
+/******************************************************************** 
+This program sets up the ATmega328P as a Main device on the TWI (I2C) bus.
+The program sends an arbitrary data byte to a Secondary device on the bus, then reads a data byte from a Secondary device on the bus.
+ */
+
+#include <avr/io.h>
+#include <avr/interrupt.h> 
+#define FREQ_CLK 1000000 //clock frequency set for internal clock 
+
+/** Function Declarations *********************************************/
+void i2c_init(void);
+void i2c_start(void);
+void i2c_stop(void);
+void i2c_repeated_start(void);
+void i2c_write_to_address(unsigned char address);
+void i2c_read_from_address(unsigned char address);
+void i2c_write_data(unsigned char data);
+unsigned char i2c_read_data(unsigned char ack);
+
+int main() {
+	unsigned char data0;  
+	unsigned char data1;   
+	int TempThreashold = 10;
+	int UpperByte;
+	int LowerByte;
+	int Temperature;
+	int TempValue;
+	
+	// I2C (TWI) Setup
+	//If needed, turn on TWI power: PRR = PRR & 0b01111111; // Ensure that TWI is powered on (PRTWI = 0)
+	DDRC = 0b00000000; // Define PORTC bits (specifically PC4 and PC5) 
+	PORTC = PORTB | 0b00110000;  // set internal pull-up resistors on SCL and SDA lines (PC5 and PC4) ofr I2C bus
+	DDRD = 0b00000001;
+	PORTD = 0b00000000;
+	
+	
+	i2c_init();
+	
+	// I2C Write data as Main - addressing the ambient temp register
+	data0 = 0x05; // register for ambient temp
+	i2c_start();
+	i2c_write_to_address(0x18);  // Address 0x18 is the address of the temp sensor
+	i2c_write_data(data0);
+	i2c_stop();
+	
+	// I2C Write data as Main - addressing the resolution register
+	data1 = 0b00001011; // register for the resolution, with the first two bits changed to have a resolution of 0.0625C
+	i2c_start();
+	i2c_write_to_address(0x18);  // Address 0x18 is the address of the temp sensor
+	i2c_write_data(data1);
+	i2c_stop();
+	
+	//I2C Read data as Main - reading the upperbytes of the 12 bits
+	i2c_start(); 
+	i2c_read_from_address(0x18); // Address 0x18 is the address of the temp sensor for reading
+	UpperByte = i2c_read_data(0b00000101);  // read with ACK
+	i2c_stop();
+	
+	//I2C Read data as Main - reading the lowerbytes of the 12 bits
+	i2c_start();
+	i2c_read_from_address(0x18); // Address 0x18 is the address of the temp sensor for reading
+	LowerByte = i2c_read_data(0b00000101);  // read with NO_ACK
+	i2c_stop();
+	
+	while (1);
+	{
+		
+		UpperByte = UpperByte & 0x1F;
+		if ((UpperByte & 0x10) == 0x10){
+			UpperByte = UpperByte & 0x0F;
+			Temperature = 256 - (UpperByte * 16+ LowerByte / 16);
+		}
+		else 
+		{
+			Temperature = (UpperByte * 16 + LowerByte / 16);
+		}
+		
+		TempValue = Temperature;
+		
+		// Keep high byte of 10-bit result (throw away lowest two bits)
+		
+		if((TempValue > TempThreashold))
+		{
+			PORTD = 0b00000001; //turn light off
+		}
+	}
+}
+
+// Note that for coding efficiencies, some of the following functions can be combined, for example to write to or read from an secondary using a single function call.  
+// This would eliminate the need for some of the while(test TWINT bit) loops that occur back-to-back when subsequent functions are called.
+
+void i2c_init(void) { // initialize i2c
+	TWSR = 0b00000000; // prescaler is set to 1
+	TWBR = 32; // Put 72 into TWBR to define SCL frequency as 100kHz for 16MHz oscillator
+	TWCR = 0b00000100; // TWEN = 1 (enable TWI)
+}
+
+void i2c_start(void) { // send start command
+	//while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000));   // wait for idle condition -- TWINT bit must be high to proceed -- not needed if single main is used
+	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);  //TWCR | 0b10100100;       // initiate START condition -- write 1 to TWINT to clear it and initiate action, set TWSTA bit, set TWEN bit
+	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000));   // wait for action to finish (poll TWINT bit)
+	// if ((TWSR & 0xF8) != START) // error checking -- need to predefine START = 0x08 and ERROR() function.
+		// ERROR();
+}
+
+void i2c_stop(void) { // send stop command
+	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ;  // wait for action to finish (poll TWINT bit)
+	TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWSTO); //TWCR = TWCR | 0b10010100;       // initiate STOP condition -- write 1 to TWINT to clear it and initiate action, set TWSTO bit and set TWEN bit
+}
+
+void i2c_repeated_start(void) {
+	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);  //TWCR | 0b10100100;       // initiate START condition -- write 1 to TWINT to clear it and initiate action, set TWSTA bit, set TWEN bit
+	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000));   // wait for action to finish (poll TWINT bit)
+	// if ((TWSR & 0xF8) != START) // error checking -- need to predefine START = 0x10 and ERROR() function.
+	// ERROR();
+}
+
+void i2c_write_to_address( unsigned char address) { //Write an address byte to the I2C2 bus in form of SLA_W (address to write to)
+	unsigned char SLA_W = address<<1; // create SLA_W byte by shifting address and leaving R/W bit clear
+	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ;  // wait for idle condition -- TWINT bit must be high to proceed
+	TWDR = SLA_W;       // Load TWDR with address plus R/W bit
+	TWCR = (1<<TWINT) | (1<<TWEN); //TWCR = TWCR | 0b10000100;       // initiate Write -- write 1 to TWINT to clear it and initiate action, and set TWEN
+	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ;  // wait for action to finish (poll TWINT bit)
+	// if ((TWSR & 0xF8) != MT_SLA_ACK) // error checking -- need to predefine MT_SLA_ACK and ERROR() function depending on possible outcomes: 0x18, 0x20, or 0x38.
+		//ERROR();	
+}
+
+void i2c_read_from_address(unsigned char address) { //Write an address byte to the I2C bus in form of SLA_R (address to read from)
+	unsigned char SLA_R = address<<1 | 1; // create SLA_R byte by shifting address and setting R/W bit
+	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ;  // wait for idle condition -- TWINT bit must be high to proceed
+	TWDR = SLA_R;       // Load TWDR with address plus R/W bit
+	TWCR = (1<<TWINT) | (1<<TWEN); //TWCR = TWCR | 0b10000100;       // initiate Write -- write 1 to TWINT to clear it and initiate action, and set TWEN
+	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ;  // wait for action to finish (poll TWINT bit)
+	// if ((TWSR & 0xF8) != MR_SLA_ACK) // error checking -- need to predefine MR_SLA_ACK and ERROR() function depending on possible outcomes: 0x38, 0x40, or 0x48.
+		//ERROR();
+}
+
+void i2c_write_data( unsigned char data) { //Write data byte to the I2C2 bus
+	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ;  // wait for idle condition -- TWINT bit must be high to proceed
+	TWDR = data;       // Load TWDR with data to be sent
+	TWCR = (1<<TWINT) | (1<<TWEN); //TWCR = TWCR | 0b10000100;       // initiate Write -- write 1 to TWINT to clear it and initiate action, and set TWEN
+	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ;  // wait for action to finish (poll TWINT bit)
+	// if ((TWSR & 0xF8) != MT_DATA_ACK) // error checking -- need to predefine MT_DATA_ACK and ERROR() function depending on possible outcomes: 0x28 or 0x30.
+		//ERROR();
+}
+
+
+unsigned char i2c_read_data(unsigned char ACK) { //Read a byte of data from a secondary on the I2C2 bus
+	unsigned char data;
+	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ;  // wait for idle condition -- TWINT bit must be high to proceed
+	if (ACK) // check for whether ACK or NO_ACK should be sent upon receipt of byte from secondary
+		TWCR = (1<<TWINT) | (1<<TWEA) | (1<<TWEN); //TWCR = TWCR | 0b11000100;       // initiate Read with ACK -- write 1 to TWINT to clear it and initiate action, and set TWEA and TWEN
+	else
+		TWCR = (1<<TWINT) | (1<<TWEN); //TWCR = TWCR | 0b10000100;       // initiate Read with NO_ACK-- write 1 to TWINT to clear it and initiate action, and set TWEN
+	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ;  // wait for action to finish (poll TWINT bit)
+	// if ((TWSR & 0xF8) != MR_SLA_ACK) // error checking -- need to predefine MR_SLA_ACK and ERROR() function depending on possible outcomes: 0x50 or 0x58.
+	//ERROR();
+	//If multiple bytes are to be read, this function can be repeated with proper ACK or NO_ACK until done.
+	data = TWDR;  // read the received data from secondary
+	return(data);
+}
+
+
+
+//This next bit of code is just for the clock!
+
+void wait(volatile int number_of_msec) {
+
+	
+
+	// This subroutine creates a delay equal to number_of_msec*T, where T is 1 msec
+
+	
+
+	// It changes depending on the frequency defined by FREQ_CLK
+
+	
+
+	char register_B_setting;
+
+	
+
+	char count_limit;
+
+	
+
+	
+
+	
+
+	// Some typical clock frequencies:
+
+	
+
+	switch(FREQ_CLK) {
+
+		
+
+		case 16000000:
+
+		
+
+		register_B_setting = 0b00000011; // this will start the timer in Normal mode with prescaler of 64 (CS02 = 0, CS01 = CS00 = 1).
+
+		
+
+		count_limit = 250; // For prescaler of 64, a count of 250 will require 1 msec
+
+		
+
+		break;
+
+		
+
+		case 8000000:
+
+		
+
+		register_B_setting =  0b00000011; // this will start the timer in Normal mode with prescaler of 64 (CS02 = 0, CS01 = CS00 = 1).
+
+		
+
+		count_limit = 125; // for prescaler of 64, a count of 125 will require 1 msec
+
+		
+
+		break;
+
+		
+
+		case 1000000:
+
+		
+
+		register_B_setting = 0b00000010; // this will start the timer in Normal mode with prescaler of 8 (CS02 = 0, CS01 = 1, CS00 = 0).
+
+		
+
+		count_limit = 125; // for prescaler of 8, a count of 125 will require 1 msec
+
+		
+
+		break;
+
+		
+
+	}
+
+
+
+	while (number_of_msec > 0) {
+
+		
+
+		TCCR0A = 0x00; // clears WGM00 and WGM01 (bits 0 and 1) to ensure Timer/Counter is in normal mode.
+
+		
+
+		TCNT0 = 0;  // preload value for testing on count = 250
+
+		
+
+		TCCR0B =  register_B_setting;  // Start TIMER0 with the settings defined above
+
+		
+
+		while (TCNT0 < count_limit); // exits when count = the required limit for a 1 msec delay
+
+		
+
+		TCCR0B = 0x00; // Stop TIMER0
+
+		
+
+		number_of_msec--;
+
+		
+
+	}
+
+	
+
+} // end wait()
