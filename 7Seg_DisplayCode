@@ -30,13 +30,20 @@ int main(void)
 
 	while (1)
 	{
-		for(int LEDstates = 1; LEDstates < 3; LEDstates ++)
+		for(int i = 1; i < 3; i ++)
 		{
-			for(int LEDstates = 1; LEDstates < 6; LEDstates ++)
+			LEDstates3 = i - 1;
+			change_led_display3_state(char LEDstates3)
+
+			for(int i = 1; i < 6; i ++)
 			{
-				for(int LEDstates = 1; LEDstates < 10; LEDstates ++)
+				LEDstates2 = i - 1;
+				change_led_display2_state(char LEDstates2)
+
+				for(int i = 1; i < 10; i ++)
 				{
-					change_led_display1_state(char LEDstates)
+					LEDstates1 = i - 1;
+					change_led_display1_state(char LEDstates1)
 					wait(1000);
 				}
 			}
@@ -47,36 +54,36 @@ int main(void)
 	
 } // end main
 
-void change_led_display1_state(char LEDstates) {
-	switch (LEDstates) {
-		case 'A': // LED Display 1 = 0
+void change_led_display1_state(char LEDstates1) {
+	switch (LEDstates1) {
+		case 0: // LED Display 1 = 0
 			send_to_MAX7221(0b00000001,0b00000000);	// 0 in binary on display 1
 			break;
-		case 'B': // LED Display 1 = 1
+		case 1: // LED Display 1 = 1
 			send_to_MAX7221(0b00000001,0b00000001);	// 1 in binary on display 1
 			break;
-		case 'C': // LED Display 1 = 2
+		case 2: // LED Display 1 = 2
 			send_to_MAX7221(0b00000001,0b00000010);	// 2 in binary on display 1
 			break;
-		case 'D': // LED Display 1 = 3
+		case 3: // LED Display 1 = 3
 			send_to_MAX7221(0b00000001,0b00000011);	// 3 in binary on display 1
 			break;
-		case 'E': // LED Display 1 = 4
+		case 4: // LED Display 1 = 4
 			send_to_MAX7221(0b00000001,0b00000100);	// 4 in binary on display 1
 			break;
-		case 'F': // LED Display 1 = 5
+		case 5: // LED Display 1 = 5
 			send_to_MAX7221(0b00000001,0b00000101);	// 5 in binary on display 1
 			break;
-		case 'G': // LED Display 1 = 6
+		case 6: // LED Display 1 = 6
 			send_to_MAX7221(0b00000001,0b00000110);	// 6 in binary on display 1
 			break;
-		case 'H': // LED Display 1 = 7
+		case 7: // LED Display 1 = 7
 			send_to_MAX7221(0b00000001,0b00000111);	// 7 in binary on display 1
 			break;
-		case 'I': // LED Display 1 = 8
+		case 8: // LED Display 1 = 8
 			send_to_MAX7221(0b00000001,0b00001000);	// 8 in binary on display 1
 			break;
-		case 'J': // LED Display 1 = 9
+		case 9: // LED Display 1 = 9
 			send_to_MAX7221(0b00000001,0b00001001);	// 9 in binary on display 1
 			break;
 		default: // functions as a Case 'K' in the pattern
@@ -88,34 +95,34 @@ void change_led_display1_state(char LEDstates) {
 
 void change_led_display1_state(char LEDstates) {
 	switch (LEDstates) {
-		case 'A': // LED Display 2 = 0
+		case 0: // LED Display 2 = 0
 			send_to_MAX7221(0b00000010,0b00000000);	// 0 in binary on display 1
 			break;
-		case 'B': // LED Display 2 = 1
+		case 1: // LED Display 2 = 1
 			send_to_MAX7221(0b00000010,0b00000001);	// 1 in binary on display 1
 			break;
-		case 'C': // LED Display 2 = 2
+		case 2: // LED Display 2 = 2
 			send_to_MAX7221(0b00000010,0b00000010);	// 2 in binary on display 1
 			break;
-		case 'D': // LED Display 2 = 3
+		case 3: // LED Display 2 = 3
 			send_to_MAX7221(0b00000010,0b00000011);	// 3 in binary on display 1
 			break;
-		case 'E': // LED Display 2 = 4
+		case 4: // LED Display 2 = 4
 			send_to_MAX7221(0b00000010,0b00000100);	// 4 in binary on display 1
 			break;
-		case 'F': // LED Display 2 = 5
+		case 5: // LED Display 2 = 5
 			send_to_MAX7221(0b00000010,0b00000101);	// 5 in binary on display 1
 			break;
-		case 'G': // LED Display 2 = 6
+		case 6: // LED Display 2 = 6
 			send_to_MAX7221(0b00000010,0b00000110);	// 6 in binary on display 1
 			break;
-		case 'H': // LED Display 2 = 7
+		case 7: // LED Display 2 = 7
 			send_to_MAX7221(0b00000010,0b00000111);	// 7 in binary on display 1
 			break;
-		case 'I': // LED Display 2 = 8
+		case 8: // LED Display 2 = 8
 			send_to_MAX7221(0b00000010,0b00001000);	// 8 in binary on display 1
 			break;
-		case 'J': // LED Display 2 = 9
+		case 9: // LED Display 2 = 9
 			send_to_MAX7221(0b00000010,0b00001001);	// 9 in binary on display 1
 			break;
 		default: // functions as a Case 'K' in the pattern
@@ -127,34 +134,34 @@ void change_led_display1_state(char LEDstates) {
 
 void change_led_display1_state(char LEDstates) {
 	switch (LEDstates) {
-		case 'A': // LED Display 3 = 0
+		case 0: // LED Display 3 = 0
 			send_to_MAX7221(0b00000011,0b00000000);	// 0 in binary on display 1
 			break;
-		case 'B': // LED Display 3 = 1
+		case 1: // LED Display 3 = 1
 			send_to_MAX7221(0b00000011,0b00000001);	// 1 in binary on display 1
 			break;
-		case 'C': // LED Display 3 = 2
+		case 2: // LED Display 3 = 2
 			send_to_MAX7221(0b00000011,0b00000010);	// 2 in binary on display 1
 			break;
-		case 'D': // LED Display 3 = 3
+		case 3: // LED Display 3 = 3
 			send_to_MAX7221(0b00000011,0b00000011);	// 3 in binary on display 1
 			break;
-		case 'E': // LED Display 3 = 4
+		case 4: // LED Display 3 = 4
 			send_to_MAX7221(0b00000011,0b00000100);	// 4 in binary on display 1
 			break;
-		case 'F': // LED Display 3 = 5
+		case 5: // LED Display 3 = 5
 			send_to_MAX7221(0b00000011,0b00000101);	// 5 in binary on display 1
 			break;
-		case 'G': // LED Display 3 = 6
+		case 6: // LED Display 3 = 6
 			send_to_MAX7221(0b00000011,0b00000110);	// 6 in binary on display 1
 			break;
-		case 'H': // LED Display 3 = 7
+		case 7: // LED Display 3 = 7
 			send_to_MAX7221(0b00000011,0b00000111);	// 7 in binary on display 1
 			break;
-		case 'I': // LED Display 3 = 8
+		case 8: // LED Display 3 = 8
 			send_to_MAX7221(0b00000011,0b00001000);	// 8 in binary on display 1
 			break;
-		case 'J': // LED Display 3 = 9
+		case 9: // LED Display 3 = 9
 			send_to_MAX7221(0b00000011,0b00001001);	// 9 in binary on display 1
 			break;
 		default: // functions as a Case 'K' in the pattern
