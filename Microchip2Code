@@ -31,16 +31,14 @@ int main(void)
 		// Follows a practice of making unused pins to be input (safer)
 	DDRB = 0b00000001;
 		// set bit PB0 as output for the green LEDs (wired)
-		// set bits PB2-1 as inputs for the 2 switches
-	DDRC = 0b11111111;
-		// set bits as 7 segment display might need to fix for display
+		// set bits PB4-1 as inputs for the 2 switches
+		// set bits PB5-3-2 for 7 segment display
 	DDRD = 0b11110000;
 		// set PD2 and PD3 for interupts
 		// set bits PD7-PD4 as output for the stepper motor
 
 	// Ports - Set or Clear Bits for stepper motor
 	PORTB = 0b00000001; // set output bits on PORTB so that all outputs are off (wired as active low)
-	PORTC = 0b11111111; // set output bits on PORTC so that input is off (wired as active low)
 	PORTD = 0b11110000; // set output bits on PORTD so that all outputs are off (wired as active low)
 
 	// Set up interrupts
