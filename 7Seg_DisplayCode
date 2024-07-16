@@ -11,8 +11,8 @@
 int send_to_MAX7221(unsigned char, unsigned char);
 void wait(volatile int multiple);
 void change_led_display1_state(char LEDstates1)
-void change_led_display1_state(char LEDstates1)
-void change_led_display1_state(char LEDstates1)
+void change_led_display2_state(char LEDstates2)
+void change_led_display3_state(char LEDstates3)
 
 int main(void)
 {
@@ -25,7 +25,7 @@ int main(void)
 	// enable the SPI, set to Main mode 0, SCK = Fosc/16, lead with MSB
 	
 	send_to_MAX7221(0b00001001,0b00000011); //enable decoding mode
-	send_to_MAX7221(0b00001011,0b00000010); //enable scan limit
+	send_to_MAX7221(0b00001011,0b00000011); //enable scan limit
 
 	send_to_MAX7221(0b00001100,0b00000001); //turn on the display
 	
