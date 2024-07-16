@@ -51,6 +51,7 @@ int main(void)
 }	// end main
 
 
+
 int send_to_MAX7221(unsigned char command, unsigned char data){
 	PORTB = PORTB & 0b11111011; // Clear PB2, which is the SS bit, so that transmission can begin
 	
