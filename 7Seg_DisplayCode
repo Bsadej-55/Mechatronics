@@ -1,131 +1,80 @@
 /*
- * Atmega328PLab9.c
+ * MEMS1049_Lab9_BNS55.cpp
  *
- * Created: 7/16/2024 8:35:17 AM
- * Author : reifler
+ * Created: 7/14/2024 5:31:49 PM
+ * Author : Brittany Sadej
  */ 
 
 #include <avr/io.h>
-#include <string.h>
 
-// Define Global Variables
-#define FREQ_CLK 1000000
-#define lcd_port PORTD // We are using port D for the LCD pins (0 = register select, 1 = enable, 4-7 = data)
-#define lcd_EN 1       // enable pin on LCD
-#define lcd_RS 0       // register select on LCD
 
-// Functions
-void wait(volatile unsigned int);
-void LCD_write(unsigned char cmd);
-void LCD_init(void);
-void LCD_command(char);
-void LCD_data(char);
-void LCD_print(char *str);
-void LCD_gotoxy(unsigned char x, unsigned char y);
+int send_to_MAX7221(unsigned char, unsigned char);
+void wait(volatile int multiple);
 
-int main() {
-	DDRD = 0xF3; // Set PD0, PD1, and PD4-7 to output for the LCD
-	LCD_init();  // initialize the LCD
-	wait(50);
 
-	LCD_gotoxy(1, 1);         // Go to the location 1,1 of lcd // or can use LCD_command(0x80); to move to location 1,2
-	LCD_print("  Mechatronics"); // Print the text
-	LCD_gotoxy(1, 2);         // Go to the location 1,2 of lcd 	// or can use LCD_command(0xA9); to move to location 1,2
-	LCD_print("     Rocks!");  // Print the text
+int main(void)
+{
+	//Setup
+	DDRD=0xFF;
+	DDRB = 0b00101100; //	DDRB = 1<<PORTB5 | 1<<PORTB3 | 1<<PORTB2;  // Set pins SCK, MOSI, and SS as output
 	
-	while (1) {};
+	// Set up Main SPI
+	SPCR = 0b01010001; // SPCR = 1<<SPE | 1<<MSTR | 1<<SPR0; // (SPIE = 0, SPE = 1, DORD = 0, MSTR = 1, CPOL = 0, CPHA = 0, SPR1 = 0, SPR0 = 1)
+	// enable the SPI, set to Main mode 0, SCK = Fosc/16, lead with MSB
+	
+	send_to_MAX7221(0b00001001,0b00000011); //enable decoding mode
+	send_to_MAX7221(0b00001011,0b00000010); //enable scan limit
 
+	send_to_MAX7221(0b00001100,0b00000001); //turn on the display
+	
+
+	while (1)
+	{
+		send_to_MAX7221(0b00001100,0b00000001); //turn on the display
+
+		send_to_MAX7221(0b00000001,0b00000000);	//0 in binary on display 1
+		send_to_MAX7221(0b00000010,0b00000111); //7 in binary on display 2
+		wait(500);
+		
+		send_to_MAX7221(0b00000001,0b00000001); //1 in binary on display 1
+		send_to_MAX7221(0b00000010,0b00000110); //6 in binary on display 2
+		wait(500);
+		
+		send_to_MAX7221(0b00001100,0b00000000); //turn off
+		wait(2000); //wait 2 seconds
+		
+	}	//end while(1)
+	
+}	// end main
+
+
+int send_to_MAX7221(unsigned char command, unsigned char data){
+	PORTB = PORTB & 0b11111011; // Clear PB2, which is the SS bit, so that transmission can begin
+	
+	SPDR = command; // Send command
+	while(!(SPSR & (1<<SPIF))); // Wait for transmission to finish
+	
+	SPDR = data; // Send data
+	while(!(SPSR & (1<<SPIF))); // Wait for transmission to finish
+	
+	PORTB = PORTB | 0b00000100; // Return PB2 to 1, which is the SS bit, to end transmission
+	
 	return 0;
 }
 
-void LCD_init(void) { // initialize the LCD
-	LCD_command(0x02); // set the LCD to 4-bit control mode
-	wait(1);
-	LCD_command(0x28); // set the LCD to 2 lines, 5X7 dots, 4-bit mode
-	wait(1);
-	LCD_command(0x01); // clear LCD
-	wait(1);
-	LCD_command(0x0E); // turn LCD cursor ON
-	wait(1);
-	LCD_command(0x80); //  set cursor at first line, first position (positions are defined by lower 7 bits and are 1-40 for line 1 and 41-80 for line 2, though
-	// positions 17-40 and 57-80 are not visible on a 16-column display
-	wait(1);
-	return;
-} // end LCD_init()
-
-void LCD_gotoxy(unsigned char x, unsigned char y) {  // move the LCD cursor to a given position on the LCD screen
-	unsigned char firstCharAdr[] = {0x80, 0xC0, 0x94, 0xD4};
-	LCD_command(firstCharAdr[y - 1] + x - 1);
-	wait(1);
-} //end LCD_gotoxy
-
-void LCD_command(char command_value) { // send a command to the LCD driver -- 1/2 nibble at a time
-	lcd_port = command_value & 0xF0;          // Send upper nibble (mask lower nibble because PD4-PD7 pins are used for data)
-	lcd_port &= ~(1 << lcd_RS); // lcd_RS = 0 for command
-	lcd_port |= (1 << lcd_EN);  // toggle lcd_EN bit
-	wait(1);
-	lcd_port &= ~(1 << lcd_EN); // toggle bit back off
-	wait(10);
-	lcd_port = ((command_value << 4) & 0xF0); // Send lower nibble (shift 4-bits and mask for lower nibble)
-	lcd_port &= ~(1 << lcd_RS); // lcd_RS = 0 for command
-	lcd_port |= (1 << lcd_EN);  // toggle lcd_EN bit
-	wait(1);
-	lcd_port &= ~(1 << lcd_EN); // toggle bit back off
-	wait(10);
-} // end LCD_command()
-
-void LCD_data(char data_value) { // send data to the LCD driver -- 1/2 nibble at a time
-	lcd_port = data_value & 0xF0; // Send upper nibble (mask lower nibble because PD4-PD7 pins are used for data)
-	lcd_port |= (1 << lcd_RS);  // lcd_RS = 1 for data
-	lcd_port |= (1 << lcd_EN);  // toggle lcd_EN bit
-	wait(1);
-	lcd_port &= ~(1 << lcd_EN); // toggle bit back off
-	wait(10);
-	lcd_port = ((data_value << 4) & 0xF0); // Shift 4-bit and mask
-	lcd_port |= (1 << lcd_RS);  // lcd_RS = 1 for data
-	lcd_port |= (1 << lcd_EN);  // toggle lcd_EN bit
-	wait(1);
-	lcd_port &= ~(1 << lcd_EN); // toggle bit back off
-	wait(10);
-} // end LCD_data()
-
-void LCD_print( char *str) { // send string information to the LCD driver to be printed (the argument stores the address of the string in pointer *str)
-	int i = 0;
-	while (str[i] != '\0') {     // loop until NULL character in the string
-		LCD_data(str[i]); // sending data on LCD byte by byte
-		i++;
+void wait(volatile int multiple)
+{
+	//this function creates a delay equal to multiple*T, where T is 1msec
+	//assumes a 8MHz clock frequency (for a different clock, change the count exit value in while loop)
+	while(multiple > 0) {
+		TCCR0A = 0x00; // clears WGM00 and WGM01 (bits 0 and 1) to ensure Timer/Counter is in normal mode
+		TCNT0 = 0; // Timer/Counter Register 0; preload value for testing on count = 250
+		TCCR0B = 0b00000010; 
+		// start TIMER0, normal mode, prescaler = 8!!!
+		//basically, last 3 bits of TCCR0B determine the clock and prescaler, and 011 means prescaler of 64
+		while (TCNT0 < 0xFA); //0xFA = 250, so it exits when count = 250 (requires preload of 0 to make count = 250)
+		// change this value for clock other than 16MHz
+		TCCR0B = 0x00; //Stop TIMER0
+		multiple--;
 	}
-	return;
-} // end LCD_print()
-
-void wait(volatile unsigned int number_of_msec) {
-	// This subroutine creates a delay equal to number_of_msec*T, where T is 1 msec
-	// It changes depending on the frequency defined by FREQ_CLK
-	char register_B_setting;
-	char count_limit;
-	
-	// Some typical clock frequencies:
-	switch(FREQ_CLK) {
-		case 16000000:
-		register_B_setting = 0b00000011; // this will start the timer in Normal mode with prescaler of 64 (CS02 = 0, CS01 = CS00 = 1).
-		count_limit = 250; // For prescaler of 64, a count of 250 will require 1 msec
-		break;
-		case 8000000:
-		register_B_setting =  0b00000011; // this will start the timer in Normal mode with prescaler of 64 (CS02 = 0, CS01 = CS00 = 1).
-		count_limit = 125; // for prescaler of 64, a count of 125 will require 1 msec
-		break;
-		case 1000000:
-		register_B_setting = 0b00000010; // this will start the timer in Normal mode with prescaler of 8 (CS02 = 0, CS01 = 1, CS00 = 0).
-		count_limit = 125; // for prescaler of 8, a count of 125 will require 1 msec
-		break;
-	}
-	
-	while (number_of_msec > 0) {
-		TCCR0A = 0x00; // clears WGM00 and WGM01 (bits 0 and 1) to ensure Timer/Counter is in normal mode.
-		TCNT0 = 0;  // preload value for testing on count = 250
-		TCCR0B =  register_B_setting;  // Start TIMER0 with the settings defined above
-		while (TCNT0 < count_limit); // exits when count = the required limit for a 1 msec delay
-		TCCR0B = 0x00; // Stop TIMER0
-		number_of_msec--;
-	}
-} // end wait()
+} //end wait()
