@@ -1,19 +1,17 @@
 /*
- * i2c_example.cpp
+ * test_doc.cpp
  *
- * Created: 4/6/2021 7:37:14 PM
- * Author : Buddy
+ * Created: 7/16/2024 8:49:26 PM
+ * Author : bsadej
  */ 
-/******************************************************************** 
-This program sets up the ATmega328P as a Main device on the TWI (I2C) bus.
-The program sends an arbitrary data byte to a Secondary device on the bus, then reads a data byte from a Secondary device on the bus.
- */
 
 #include <avr/io.h>
-#include <avr/interrupt.h> 
-#define FREQ_CLK 1000000 //clock frequency set for internal clock 
-
-/** Function Declarations *********************************************/
+//Timer Functions
+void wait(volatile int multiple, volatile char time_choice);
+void delay_T_msec_timer0(char choice);
+//7-Segment Functions
+int send_to_MAX7221(unsigned char, unsigned char);
+//Temp Sensor I2C Functions
 void i2c_init(void);
 void i2c_start(void);
 void i2c_stop(void);
@@ -23,267 +21,214 @@ void i2c_read_from_address(unsigned char address);
 void i2c_write_data(unsigned char data);
 unsigned char i2c_read_data(unsigned char ack);
 
-int main() {
-	unsigned char data0;  
-	unsigned char data1;   
-	int TempThreashold = 10;
-	int UpperByte;
-	int LowerByte;
-	int Temperature;
-	int TempValue;
-	
-	// I2C (TWI) Setup
-	//If needed, turn on TWI power: PRR = PRR & 0b01111111; // Ensure that TWI is powered on (PRTWI = 0)
-	DDRC = 0b00000000; // Define PORTC bits (specifically PC4 and PC5) 
-	PORTC = PORTB | 0b00110000;  // set internal pull-up resistors on SCL and SDA lines (PC5 and PC4) ofr I2C bus
-	DDRD = 0b00000001;
-	PORTD = 0b00000000;
-	
-	
-	i2c_init();
-	
-	// I2C Write data as Main - addressing the ambient temp register
-	data0 = 0x05; // register for ambient temp
-	i2c_start();
-	i2c_write_to_address(0x18);  // Address 0x18 is the address of the temp sensor
-	i2c_write_data(data0);
-	i2c_stop();
-	
-	// I2C Write data as Main - addressing the resolution register
-	data1 = 0b00001011; // register for the resolution, with the first two bits changed to have a resolution of 0.0625C
-	i2c_start();
-	i2c_write_to_address(0x18);  // Address 0x18 is the address of the temp sensor
-	i2c_write_data(data1);
-	i2c_stop();
-	
-	//I2C Read data as Main - reading the upperbytes of the 12 bits
-	i2c_start(); 
-	i2c_read_from_address(0x18); // Address 0x18 is the address of the temp sensor for reading
-	UpperByte = i2c_read_data(0b00000101);  // read with ACK
-	i2c_stop();
-	
-	//I2C Read data as Main - reading the lowerbytes of the 12 bits
-	i2c_start();
-	i2c_read_from_address(0x18); // Address 0x18 is the address of the temp sensor for reading
-	LowerByte = i2c_read_data(0b00000101);  // read with NO_ACK
-	i2c_stop();
-	
-	while (1);
-	{
-		
-		UpperByte = UpperByte & 0x1F;
-		if ((UpperByte & 0x10) == 0x10){
-			UpperByte = UpperByte & 0x0F;
-			Temperature = 256 - (UpperByte * 16+ LowerByte / 16);
-		}
-		else 
+
+//** GLOBAL VARIABLES **
+unsigned char temperature_high, temperature_low, temperature_C, temperature_F, tens,
+ones;
+
+int main(void)
+{
+    // setup 7-Segment Display
+    DDRB = 0b00101100; // Set pins SCK, MOSI, and SS as output
+    // Set up Main SPI
+    SPCR = 0b01010001; // (SPIE = 0, SPE = 1, DORD = 0, MSTR = 1, CPOL = 0, CPHA = 0, SPR1 = 0, SPR0 = 1)
+    // enable the SPI, set to Main mode 0, SCK = Fosc/16, lead with MSB
+
+    send_to_MAX7221(0b00001001, 0b00000011); //Set Decoding Mode On
+    send_to_MAX7221(0b00001011, 0b00000010); //Set Scan Limit
+    send_to_MAX7221(0b00001100, 0b00000001); //Turn On/Off
+    send_to_MAX7221(0b00001010, 0x0F); //Brightness
+    //Setup for I2C
+    DDRC = 0b00000011; // Set all ports but 0 and 1 as input. 0 and 1 are
+    //defined as output
+    PORTC = 0b00110000; // Set SDA and SCK as pull up
+    i2c_init();
+    // Setup stepper motor
+    DDRD = 0b11111111; //Set all PORTD to Output 
+	PORTD = 0b00000000; //Set LED to on
+    while (1) 
+    {
+		// Setting Resolution
+		i2c_start();
+		i2c_write_to_address(0x18);
+		i2c_write_data(0x08);
+		i2c_write_data(0x00);
+		i2c_stop();
+
+		// Reading Data
+		i2c_start();
+		i2c_write_to_address(0x18);
+		i2c_write_data(0x05);
+		i2c_repeated_start();
+		i2c_read_from_address(0x18);
+		temperature_high = i2c_read_data(1);
+		temperature_low = i2c_read_data(0);
+		i2c_stop();
+
+
+		// Converting temperature from the two bits
+		temperature_high = temperature_high & 0x1F; // Take only the last 5
+		//bits of the higher temperature
+		if((temperature_high & 0x10) == 0x10)
 		{
-			Temperature = (UpperByte * 16 + LowerByte / 16);
+			temperature_high = temperature_high & 0x0F;
+			temperature_C = 256 - (temperature_high * 16.0 +
+			temperature_low / 16.0);
 		}
-		
-		TempValue = Temperature;
-		
-		// Keep high byte of 10-bit result (throw away lowest two bits)
-		
-		if((TempValue > TempThreashold))
+		else
 		{
-			PORTD = 0b00000001; //turn light off
+			temperature_C = (temperature_high * 16.0 + temperature_low /
+			16.0);
 		}
+		temperature_F = temperature_C * 9.0/5.0 + 32; // Convert from C to F
+		tens = temperature_F /10; // Take the tens value from the temperature
+		ones = temperature_F %10; // Take the ones value from the temperature
+
+		send_to_MAX7221(0b00000010, ones); // Send the ones value to the 7 -Segment
+		send_to_MAX7221(0b00000001, tens); // Send the tens value to the 7 -Segment
+
+
+		wait(500,1);
+		
+		if (tens >= 9)
+		{
+			PORTD = 0b00000001; //turn LED off
+		}
+		else
+		{
+			PORTD = 0b00000000; //turn LED on
+		}
+		
+    }//end while
+}//end void
+
+int send_to_MAX7221(unsigned char command, unsigned char data)
+{
+	PORTB = PORTB & 0b11111011; // Clear PB2, which is the SS bit, so that transmission can begin
+	SPDR = command; // Send command
+	while(!(SPSR & (1<<SPIF))); // Wait for transmission to finish
+		SPDR = data; // Send data
+	while(!(SPSR & (1<<SPIF))); // Wait for transmission to finish
+		PORTB = PORTB | 0b00000100; // Return PB2 to 1, which is the SS bit, to end transmission
+	return 0;
+}
+//Timer Functions
+void wait(volatile int multiple, volatile char time_choice) {
+	/* This subroutine calls others to create a delay.
+	 Total delay = multiple*T, where T is in msec and is the delay
+	created by the called function.
+	 Inputs: multiple = number of multiples to delay, where multiple is
+	the number of times an actual delay loop is called.
+	 Outputs: None
+	*/
+	while (multiple > 0) {
+		delay_T_msec_timer0(time_choice);
+		multiple--;
 	}
+} // end wait()
+void delay_T_msec_timer0(volatile char choice) {
+	 //*** delay T ms **
+	 /* This subroutine creates a delay of T msec using TIMER0 with prescaler on
+	clock, where, for a 16MHz clock:
+	 for Choice = 1: T = 0.125 msec for prescaler set to 8 and count of
+	250 (preload counter with 5)
+	 for Choice = 2: T = 1 msec for prescaler set to 64 and count of 250
+	(preload counter with 5)
+	 for Choice = 3: T = 4 msec for prescaler set to 256 and count of 250
+	(preload counter with 5)
+	 for Choice = 4: T = 16 msec for prescaler set to 1,024 and count of
+	250 (preload counter with 5)
+	 for Choice = Default: T = .0156 msec for no prescaler and
+	count of 250 (preload counter with 5)
+	 Inputs: None
+	 Outputs: None
+	*/
+	TCCR0A = 0x00; // clears WGM00 and WGM01 (bits 0 and 1) to ensure Timer/Counter is in normal mode.
+	TCNT0 = 0; // preload value for testing on count = 250
+	// preload value for alternate test on while loop: TCNT0 = 5; // preload ;oad TIMER0 (count must reach 255-5 = 250)
+	switch ( choice ) { // choose prescaler
+	 case 1:
+	 TCCR0B = 0b00000010; //1<<CS01; TCCR0B = 0x02; // Start TIMER0, Normal mode, crystal clock, prescaler = 8
+	 break;
+	 case 2:
+	 TCCR0B = 0b00000011; //1<<CS01 | 1<<CS00; TCCR0B = 0x03; // Start TIMER0, Normal mode, crystal clock, prescaler = 64
+	 break;
+	 case 3:
+	 TCCR0B = 0b00000100; //1<<CS02; TCCR0B = 0x04; // Start TIMER0, Normal mode, crystal clock, prescaler = 256
+	 break;
+	 case 4:
+	 TCCR0B = 0b00000101; //1<<CS02 | 1<<CS00; TCCR0B = 0x05; // Start TIMER0, Normal mode, crystal clock, prescaler = 1024
+	 break;
+	 default:
+	 TCCR0B = 0b00000001; //1<<CS00; TCCR0B = 0x01; Start TIMER0, Normal mode, crystal clock, no prescaler
+	 break;
+	}
+	while (TCNT0 < 0xFA); // exits when count = 250 (requires preload of 0 to make count = 250)
+		// alternate test on while loop: while ((TIFR0 & (0x1<<TOV0)) == 0); // wait for TOV0 to roll over:
+		// How does this while loop work?? See notes
+		TCCR0B = 0x00; // Stop TIMER0
+		//TIFR0 = 0x1<<TOV0; // Alternate while loop: Clear TOV0 (note that this is a nonintuitive bit in that it is cleared by writing a 1 to it)
+		} // end delay_T_msec_timer0()
+		//I2C Functions
+		void i2c_init(void) { // initialize i2c
+		TWSR = 0b00000000; // prescaler is set to 1
+		TWBR = 72; // Put 72 into TWBR to define SCL frequency as 100kHz for 16MHz oscillator
+		TWCR = 0b00000100; // TWEN = 1 (enable TWI)
 }
-
-// Note that for coding efficiencies, some of the following functions can be combined, for example to write to or read from an secondary using a single function call.  
-// This would eliminate the need for some of the while(test TWINT bit) loops that occur back-to-back when subsequent functions are called.
-
-void i2c_init(void) { // initialize i2c
-	TWSR = 0b00000000; // prescaler is set to 1
-	TWBR = 32; // Put 72 into TWBR to define SCL frequency as 100kHz for 16MHz oscillator
-	TWCR = 0b00000100; // TWEN = 1 (enable TWI)
-}
-
 void i2c_start(void) { // send start command
-	//while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000));   // wait for idle condition -- TWINT bit must be high to proceed -- not needed if single main is used
-	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);  //TWCR | 0b10100100;       // initiate START condition -- write 1 to TWINT to clear it and initiate action, set TWSTA bit, set TWEN bit
-	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000));   // wait for action to finish (poll TWINT bit)
-	// if ((TWSR & 0xF8) != START) // error checking -- need to predefine START = 0x08 and ERROR() function.
-		// ERROR();
+	//while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)); // wait for idle condition -- TWINT bit must be high to proceed -- not needed if single main is used
+	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN); //TWCR | 0b10100100; // initiate START condition -- write 1 to TWINT to clear it and initiate action, set TWSTA bit, set TWEN bit
+	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)); // wait for action to finish (poll TWINT bit)
+	// if ((TWSR & 0xF8) != START) // error checking -- need to predefine START= 0x08 and ERROR() function.
+	// ERROR();
 }
-
 void i2c_stop(void) { // send stop command
-	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ;  // wait for action to finish (poll TWINT bit)
-	TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWSTO); //TWCR = TWCR | 0b10010100;       // initiate STOP condition -- write 1 to TWINT to clear it and initiate action, set TWSTO bit and set TWEN bit
+	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ; // wait for action to finish (poll TWINT bit)
+	TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWSTO); //TWCR = TWCR | 0b10010100;
+	 // initiate STOP condition -- write 1 to TWINT to clear it and initiate action, set TWSTO bit and set TWEN bit
 }
-
 void i2c_repeated_start(void) {
-	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);  //TWCR | 0b10100100;       // initiate START condition -- write 1 to TWINT to clear it and initiate action, set TWSTA bit, set TWEN bit
-	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000));   // wait for action to finish (poll TWINT bit)
+	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN); //TWCR | 0b10100100; // initiate START condition -- write 1 to TWINT to clear it and initiate action, set TWSTA bit, set TWEN bit
+	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)); // wait for action to finish (poll TWINT bit)
 	// if ((TWSR & 0xF8) != START) // error checking -- need to predefine START = 0x10 and ERROR() function.
 	// ERROR();
 }
-
 void i2c_write_to_address( unsigned char address) { //Write an address byte to the I2C2 bus in form of SLA_W (address to write to)
 	unsigned char SLA_W = address<<1; // create SLA_W byte by shifting address and leaving R/W bit clear
-	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ;  // wait for idle condition -- TWINT bit must be high to proceed
-	TWDR = SLA_W;       // Load TWDR with address plus R/W bit
-	TWCR = (1<<TWINT) | (1<<TWEN); //TWCR = TWCR | 0b10000100;       // initiate Write -- write 1 to TWINT to clear it and initiate action, and set TWEN
-	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ;  // wait for action to finish (poll TWINT bit)
+	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ; // wait for idle condition -- TWINT bit must be high to proceed
+		TWDR = SLA_W; // Load TWDR with address plus R/W bit
+		TWCR = (1<<TWINT) | (1<<TWEN); //TWCR = TWCR | 0b10000100; // initiate Write -- write 1 to TWINT to clear it and initiate action, and set TWEN
+	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ; // wait for action to finish (poll TWINT bit)
 	// if ((TWSR & 0xF8) != MT_SLA_ACK) // error checking -- need to predefine MT_SLA_ACK and ERROR() function depending on possible outcomes: 0x18, 0x20, or 0x38.
-		//ERROR();	
+	//ERROR();
 }
-
 void i2c_read_from_address(unsigned char address) { //Write an address byte to the I2C bus in form of SLA_R (address to read from)
 	unsigned char SLA_R = address<<1 | 1; // create SLA_R byte by shifting address and setting R/W bit
-	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ;  // wait for idle condition -- TWINT bit must be high to proceed
-	TWDR = SLA_R;       // Load TWDR with address plus R/W bit
-	TWCR = (1<<TWINT) | (1<<TWEN); //TWCR = TWCR | 0b10000100;       // initiate Write -- write 1 to TWINT to clear it and initiate action, and set TWEN
-	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ;  // wait for action to finish (poll TWINT bit)
+	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ; // wait for idle condition -- TWINT bit must be high to proceed
+		TWDR = SLA_R; // Load TWDR with address plus R/W bit
+		TWCR = (1<<TWINT) | (1<<TWEN); //TWCR = TWCR | 0b10000100; // initiate Write -- write 1 to TWINT to clear it and initiate action, and set TWEN
+	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ; // wait for action to finish (poll TWINT bit)
 	// if ((TWSR & 0xF8) != MR_SLA_ACK) // error checking -- need to predefine MR_SLA_ACK and ERROR() function depending on possible outcomes: 0x38, 0x40, or 0x48.
-		//ERROR();
+	//ERROR();
 }
-
 void i2c_write_data( unsigned char data) { //Write data byte to the I2C2 bus
-	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ;  // wait for idle condition -- TWINT bit must be high to proceed
-	TWDR = data;       // Load TWDR with data to be sent
-	TWCR = (1<<TWINT) | (1<<TWEN); //TWCR = TWCR | 0b10000100;       // initiate Write -- write 1 to TWINT to clear it and initiate action, and set TWEN
-	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ;  // wait for action to finish (poll TWINT bit)
+	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ; // wait for idle condition -- TWINT bit must be high to proceed
+		TWDR = data; // Load TWDR with data to be sent
+		TWCR = (1<<TWINT) | (1<<TWEN); //TWCR = TWCR | 0b10000100; // initiate Write -- write 1 to TWINT to clear it and initiate action, and set TWEN
+	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ; // wait for action to finish (poll TWINT bit)
 	// if ((TWSR & 0xF8) != MT_DATA_ACK) // error checking -- need to predefine MT_DATA_ACK and ERROR() function depending on possible outcomes: 0x28 or 0x30.
-		//ERROR();
+	//ERROR();
 }
-
-
 unsigned char i2c_read_data(unsigned char ACK) { //Read a byte of data from a secondary on the I2C2 bus
 	unsigned char data;
-	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ;  // wait for idle condition -- TWINT bit must be high to proceed
-	if (ACK) // check for whether ACK or NO_ACK should be sent upon receipt of byte from secondary
-		TWCR = (1<<TWINT) | (1<<TWEA) | (1<<TWEN); //TWCR = TWCR | 0b11000100;       // initiate Read with ACK -- write 1 to TWINT to clear it and initiate action, and set TWEA and TWEN
-	else
-		TWCR = (1<<TWINT) | (1<<TWEN); //TWCR = TWCR | 0b10000100;       // initiate Read with NO_ACK-- write 1 to TWINT to clear it and initiate action, and set TWEN
-	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ;  // wait for action to finish (poll TWINT bit)
-	// if ((TWSR & 0xF8) != MR_SLA_ACK) // error checking -- need to predefine MR_SLA_ACK and ERROR() function depending on possible outcomes: 0x50 or 0x58.
-	//ERROR();
-	//If multiple bytes are to be read, this function can be repeated with proper ACK or NO_ACK until done.
-	data = TWDR;  // read the received data from secondary
+	while (!(TWCR & (1<<TWINT))); // wait for idle condition -- TWINT bit must be high to proceed
+		if (ACK) // check for whether ACK or NO_ACK should be sent upon receipt of byte from secondary
+			TWCR = (1<<TWINT) | (1<<TWEA) | (1<<TWEN); // initiate Read with ACK -- write 1 to TWINT to clear it and initiate action, and set TWEA and TWEN
+		else
+			TWCR = (1<<TWINT) | (1<<TWEN); // initiate Read with NO_ACK-- write 1 to TWINT to clear it and initiate action, and set TWEN
+	while (!(TWCR & (1<<TWINT))); // wait for action to finish (poll TWINT bit)
+		data = TWDR; // read the received data from secondary
 	return(data);
 }
 
 
-
-//This next bit of code is just for the clock!
-
-void wait(volatile int number_of_msec) {
-
-	
-
-	// This subroutine creates a delay equal to number_of_msec*T, where T is 1 msec
-
-	
-
-	// It changes depending on the frequency defined by FREQ_CLK
-
-	
-
-	char register_B_setting;
-
-	
-
-	char count_limit;
-
-	
-
-	
-
-	
-
-	// Some typical clock frequencies:
-
-	
-
-	switch(FREQ_CLK) {
-
-		
-
-		case 16000000:
-
-		
-
-		register_B_setting = 0b00000011; // this will start the timer in Normal mode with prescaler of 64 (CS02 = 0, CS01 = CS00 = 1).
-
-		
-
-		count_limit = 250; // For prescaler of 64, a count of 250 will require 1 msec
-
-		
-
-		break;
-
-		
-
-		case 8000000:
-
-		
-
-		register_B_setting =  0b00000011; // this will start the timer in Normal mode with prescaler of 64 (CS02 = 0, CS01 = CS00 = 1).
-
-		
-
-		count_limit = 125; // for prescaler of 64, a count of 125 will require 1 msec
-
-		
-
-		break;
-
-		
-
-		case 1000000:
-
-		
-
-		register_B_setting = 0b00000010; // this will start the timer in Normal mode with prescaler of 8 (CS02 = 0, CS01 = 1, CS00 = 0).
-
-		
-
-		count_limit = 125; // for prescaler of 8, a count of 125 will require 1 msec
-
-		
-
-		break;
-
-		
-
-	}
-
-
-
-	while (number_of_msec > 0) {
-
-		
-
-		TCCR0A = 0x00; // clears WGM00 and WGM01 (bits 0 and 1) to ensure Timer/Counter is in normal mode.
-
-		
-
-		TCNT0 = 0;  // preload value for testing on count = 250
-
-		
-
-		TCCR0B =  register_B_setting;  // Start TIMER0 with the settings defined above
-
-		
-
-		while (TCNT0 < count_limit); // exits when count = the required limit for a 1 msec delay
-
-		
-
-		TCCR0B = 0x00; // Stop TIMER0
-
-		
-
-		number_of_msec--;
-
-		
-
-	}
-
-	
-
-} // end wait()
