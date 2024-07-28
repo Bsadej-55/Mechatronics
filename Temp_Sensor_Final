@@ -25,8 +25,6 @@ temp_ones;
 
 int main(void)
 {
-    // setup 7-Segment Display
-    DDRB = 0b00101100; // Set pins SCK, MOSI, and SS as output
     // Set up Main SPI
     SPCR = 0b01010001; // (SPIE = 0, SPE = 1, DORD = 0, MSTR = 1, CPOL = 0, CPHA = 0, SPR1 = 0, SPR0 = 1)
     // enable the SPI, set to Main mode 0, SCK = Fosc/16, lead with MSB
