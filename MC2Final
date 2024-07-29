@@ -28,12 +28,13 @@ int phase_step = 1; // We will use wave stepping, so the steps are numbered 1-4,
 
 int main(void)
 {
+
 	// Data Registries - IO
 		// Follows a practice of making unused pins to be input (safer)
-	DDRB = 0b00000001;
+	DDRB = 0b00101101;
 		// set bit PB0 as output for the green LEDs (wired)
 		// set bits PB4-1 as inputs for the 2 buttons
-		// set bits PB5-3-2 for 7 segment display
+		// set bits PB5-3-2 as outputs for 7 segment display, pins SCK, MOSI, and SS as output
 	DDRD = 0b11110000;
 		// set PD2 and PD3 for interupts
 		// set bits PD7-PD4 as output for the stepper motor
@@ -41,7 +42,16 @@ int main(void)
 	// Ports - Set or Clear Bits for stepper motor
 	PORTB = 0b00000001; // set output bits on PORTB so that all outputs are off (wired as active low)
 	PORTD = 0b11110000; // set output bits on PORTD so that all outputs are off (wired as active low)
+
+	// Set up Main SPI
+	SPCR = 0b01010001; // SPCR = 1<<SPE | 1<<MSTR | 1<<SPR0; // (SPIE = 0, SPE = 1, DORD = 0, MSTR = 1, CPOL = 0, CPHA = 0, SPR1 = 0, SPR0 = 1)
+	// enable the SPI, set to Main mode 0, SCK = Fosc/16, lead with MSB
 	
+	send_to_MAX7221(0b00001001,0b00000011); //enable decoding mode
+	send_to_MAX7221(0b00001011,0b00000011); //enable scan limit
+
+	send_to_MAX7221(0b00001100,0b00000001); //turn on the display
+
 	while (1) 
 	{
 		if (!(PINB & 0b00000010)) // switch is pressed
