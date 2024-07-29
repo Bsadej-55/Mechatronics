@@ -1,1 +1,13 @@
+/*
+ * This Code is for microchip 2
+ * 
+ * 
+ */ 
 
+#include <avr/io.h>
+
+#define FREQ_CLK 1000000 //clock frequency set for internal clock
+
+// Timer Functions
+void wait(volatile int multiple, volatile char time_choice);
+void delay_T_msec_timer0(char choice);
