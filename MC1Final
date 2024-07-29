@@ -63,11 +63,10 @@ int main(void)
 
 	//Setup for I2C
 	i2c_init();
+				PORTD = 0b00000000; //turn LED on
 
-	PORTD = 0b00000000; //Set 7 segment to on
-
-    while (1) // temp sensor
-    {
+	while (1)
+	{
   		// Setting Resolution
   		i2c_start(); //sends start command
   		i2c_write_to_address(0x18); //addressing the MCP9808 address
@@ -132,10 +131,10 @@ int main(void)
 				wait(500, 1);	// wait 0.5 sec
 				
 				// move 90 deg CCW in 1 second & have led 2 (PB1) on
-				for (int i = 0; i<1000; i++) {
-					step_CW();
-					wait(6,1);
-				}
+				//for (int i = 0; i<1000; i++) {
+				//	step_CW();
+				//	wait(6,1);
+				//}
 			} // end motor while
 
 		} // end of button if statement
