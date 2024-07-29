@@ -127,7 +127,7 @@ int main(void)
 		  		}
 		
 				// move CW for 500msec seconds, takes the place of the 500msec wait function for the temperature sensor
-				for (int i = 0; i<999; i++) {
+				for (int i = 0; i<99; i++) {
 					step_CW();
 					wait(5, 1);
 				}
