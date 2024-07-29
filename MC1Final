@@ -55,7 +55,7 @@ int main(void)
 	//Setup for I2C
 	i2c_init();
 
-	PORTC = 0b00000010; //Set yellow LED to on
+	PORTD = 0b00000000; //Set 7 segment to on
 
     while (1) 
     {
