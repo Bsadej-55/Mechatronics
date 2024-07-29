@@ -16,6 +16,13 @@ void delay_T_msec_timer0(char choice);
 void step_CW( void );
 void step_CCW( void );
 
+// 7-Segment Display Functions
+int send_to_MAX7221(unsigned char, unsigned char);
+void wait(volatile int multiple);
+void change_led_display1_state(int LEDstates1);
+void change_led_display2_state(int LEDstates2);
+void change_led_display3_state(int LEDstates3);
+
 //** GLOBAL VARIABLES **
 int phase_step = 1; // We will use wave stepping, so the steps are numbered 1-4, then will repeat.
 
