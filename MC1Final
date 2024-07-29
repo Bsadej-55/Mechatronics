@@ -32,6 +32,7 @@ void delay_T_msec_timer0(char choice);
 //** GLOBAL VARIABLES **
 unsigned char temp_high, temp_low, temp_C, temp_F, temp_tens,
 temp_ones;
+int phase_step = 1; // We will use wave stepping, so the steps are numbered 1-4, then will repeat.
 
 int main(void)
 {
