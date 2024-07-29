@@ -67,18 +67,18 @@ int main(void)
 
 	while (1)
 	{
+		// Setting Resolution
+		i2c_start(); //sends start command
+		i2c_write_to_address(0x18); //addressing the MCP9808 address
+		i2c_write_data(0x08); //writing data, calling on the resolution register
+		//don't need a repeated start as we are addressing the same secondary with the same R/W config
+		i2c_write_data(0x00); //writing the data which defines the resolution, for higher res. (0.0625C) set to 0b00000011 or 0x03
+		i2c_stop(); // stops the write
+
 		if (!(PINB & 0b00000010))	// roller switch is pressed
 		{
 			while(1)
-			{
-		  		// Setting Resolution
-		  		i2c_start(); //sends start command
-		  		i2c_write_to_address(0x18); //addressing the MCP9808 address
-		  		i2c_write_data(0x08); //writing data, calling on the resolution register
-		  		//don't need a repeated start as we are addressing the same secondary with the same R/W config
-		  		i2c_write_data(0x00); //writing the data which defines the resolution, for higher res. (0.0625C) set to 0b00000011 or 0x03
-		  		i2c_stop(); // stops the write 
-		
+			{		
 		  		// Reading Data
 		  		i2c_start(); //sends start command
 		  		i2c_write_to_address(0x18); //addressing the MCP9808 adress
@@ -109,17 +109,15 @@ int main(void)
 		  		temp_F = temp_C * 9.0/5.0 + 32; // Convert from C to F
 		  		temp_tens = temp_F /10; // Take the tens value from the temperature
 		  		temp_ones = temp_F %10; // Take the ones value from the temperature
-		  
-		  		// wait(500,1);
 		  		
-		  		if ((temp_tens*10)+ temp_ones >= 75) //Change the 75 value to whatever value we want the hot dog to be at
+		  		if ((temp_tens*10)+ temp_ones >= 75) // Change the 75 value to whatever value we want the hot dog to be at
 		  		{
 		  				
-		  			PORTD = 0b00000001; //turn LED off
+		  			PORTC = 0b00000001; // turn RED LED on and YELLOW LED off
 		  		}
 		  		else
 		  		{
-		  			PORTD = 0b00000000; //turn LED on
+		  			PORTC = 0b00000010; // turn YELLOW LED on and RED LED off
 		  		}
 		
 				// move CW for 500msec seconds, takes the place of the 500msec wait function for the temperature sensor
@@ -127,14 +125,21 @@ int main(void)
 					step_CW();
 					wait(5, 1);
 				}
-				step_CW(); // on the last turn go back through the while loop instead of using a wait function
+				step_CW(); // on the last motor turn go back through the while loop instead of using a wait function
 
 			} // end while inside if statement
 		} // end button/switch if statement
+		else
+		{
+			PORTC = 0b00000011; // turn RED and YELLOW LEDs off
+		} // end button/switch else statement
+		
 	} //end while
 
 return(0);
 } //end void
+
+//GREEN LED Interrupt
 
 //Timer Functions
 void wait(volatile int multiple, volatile char time_choice) {
