@@ -52,7 +52,31 @@ int main(void)
 
 	send_to_MAX7221(0b00001100,0b00000001); //turn on the display
 
-	while (1) 
+	while (1) // 7-segment
+	{
+		for(int i = 1; i < 3; i++)
+		{
+			int LEDstates3 = i - 1;
+			change_led_display3_state(LEDstates3);
+
+			for(int j = 1; j < 6; j ++)
+			{
+				int LEDstates2 = j - 1;
+				change_led_display2_state(LEDstates2);
+
+				for(int k = 1; k < 10; k ++)
+				{
+					int LEDstates1 = k - 1;
+					change_led_display1_state(LEDstates1);
+					wait(1000);
+				}
+			}
+		}
+		
+		send_to_MAX7221(0b00001100,0b00000000); //turn off
+	} //end 7-segment LED Display while
+
+	while (1) // pusher motor
 	{
 		if (!(PINB & 0b00000010)) // switch is pressed
 		{
@@ -70,7 +94,7 @@ int main(void)
 				wait(6,1);
 			}
 		}
-	}
+	} // end motor while
 
 return(0);
 } // end main
