@@ -145,7 +145,16 @@ int main(void)
 return(0);
 } //end void
 
-//GREEN LED Interrupt
+//GREEN LED and Pusher Button Interrupt Service Routine (ISR) for INT0
+ISR(INT0_vect) { // checks if pusher button is pushed
+	if(!(PORTB & 0b00000001)) { // checks GREEN LED is on
+		////////////////
+	}
+	wait(80,2); // switch debounce (waits to check switch pin status again -
+		    // prevents the system perceiving double presses)
+	EIFR = 0b00000001;
+}
+
 
 //Timer Functions
 void wait(volatile int multiple, volatile char time_choice) {
