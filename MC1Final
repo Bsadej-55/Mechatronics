@@ -42,8 +42,9 @@ int main(void)
 
 	// Data Registries - IO
 		// Follows a practice of making unused pins to be input (safer)
-	DDRB = 0b11111111;
-		// set bits PB7-0 as output for relay idk about this might need to fix for relay
+	DDRB = 0b00000110;
+		// set bits PB2-1 as output for relay
+		// PB0 = input from Green LED
 	DDRC = 0b00000011;
 		// set PC0 as output for yellow LED (wired)
 		// set PC1 as output for red LED (wired)
