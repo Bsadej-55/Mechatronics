@@ -49,7 +49,7 @@ int main(void)
 		// set PC4 as input for temperature sensor
 		// set PC5 (ADC5) as input for analog for temperature sensor
 	DDRD = 0b11110011;
-		// set PD2 and PD3 for interupts (unnecessary)
+		// set PD2 and PD3 for interupts (unnecessary?)
 		// set bits PD7-PD4 as outputs for stepper motor
 
 	// Ports - Set or Clear
