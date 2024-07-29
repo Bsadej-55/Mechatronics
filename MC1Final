@@ -61,6 +61,11 @@ int main(void)
 	PORTD = 0b11110011;
 		// set output bits so that all outputs are off
 
+	// Set up interrupts
+	EICRA = 1 << ISC01 | 1 << ISC00 | 1 << ISC11 | 1 << ISC10; // triggers INT0 and INT1 on rising edge
+	EIMSK = 1 << INT1 | 1 << INT0; // enable INT1 and INT0
+	sei(); // enable global interrupt
+
 	//Setup for I2C
 	i2c_init();
 				PORTD = 0b00000000; //turn LED on
