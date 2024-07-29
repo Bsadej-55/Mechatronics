@@ -25,9 +25,6 @@ unsigned char i2c_read_data(unsigned char ack);
 // Motor Functions
 void step_CW( void );
 void step_CCW( void );
-void wait(volatile int multiple, volatile char time_choice);
-void delay_T_msec_timer0(char choice);
-
 
 //** GLOBAL VARIABLES **
 unsigned char temp_high, temp_low, temp_C, temp_F, temp_tens,
@@ -163,7 +160,8 @@ void wait(volatile int multiple, volatile char time_choice) {
 		delay_T_msec_timer0(time_choice);
 		multiple--;
 	}
-} // end wait()
+} // end wait
+
 void delay_T_msec_timer0(volatile char choice) {
 	 //*** delay T ms **
 	 /* This subroutine creates a delay of T msec using TIMER0 with prescaler on
@@ -212,25 +210,26 @@ void delay_T_msec_timer0(volatile char choice) {
 		TWSR = 0b00000000; // prescaler is set to 1
 		TWBR = 72; // Put 72 into TWBR to define SCL frequency as 100kHz for 16MHz oscillator
 		TWCR = 0b00000100; // TWEN = 1 (enable TWI)
-}
+} // end delay
+
 void i2c_start(void) { // send start command
 	//while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)); // wait for idle condition -- TWINT bit must be high to proceed -- not needed if single main is used
 	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN); //TWCR | 0b10100100; // initiate START condition -- write 1 to TWINT to clear it and initiate action, set TWSTA bit, set TWEN bit
 	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)); // wait for action to finish (poll TWINT bit)
 	// if ((TWSR & 0xF8) != START) // error checking -- need to predefine START= 0x08 and ERROR() function.
 	// ERROR();
-}
+} // end i2c start
 void i2c_stop(void) { // send stop command
 	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ; // wait for action to finish (poll TWINT bit)
 	TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWSTO); //TWCR = TWCR | 0b10010100;
 	 // initiate STOP condition -- write 1 to TWINT to clear it and initiate action, set TWSTO bit and set TWEN bit
-}
+} // end i2c stop
 void i2c_repeated_start(void) {
 	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN); //TWCR | 0b10100100; // initiate START condition -- write 1 to TWINT to clear it and initiate action, set TWSTA bit, set TWEN bit
 	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)); // wait for action to finish (poll TWINT bit)
 	// if ((TWSR & 0xF8) != START) // error checking -- need to predefine START = 0x10 and ERROR() function.
 	// ERROR();
-}
+} // end i2c repeated start
 void i2c_write_to_address( unsigned char address) { //Write an address byte to the I2C2 bus in form of SLA_W (address to write to)
 	unsigned char SLA_W = address<<1; // create SLA_W byte by shifting address and leaving R/W bit clear
 	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ; // wait for idle condition -- TWINT bit must be high to proceed
@@ -239,7 +238,7 @@ void i2c_write_to_address( unsigned char address) { //Write an address byte to t
 	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ; // wait for action to finish (poll TWINT bit)
 	// if ((TWSR & 0xF8) != MT_SLA_ACK) // error checking -- need to predefine MT_SLA_ACK and ERROR() function depending on possible outcomes: 0x18, 0x20, or 0x38.
 	//ERROR();
-}
+} // end i2c write to address
 void i2c_read_from_address(unsigned char address) { //Write an address byte to the I2C bus in form of SLA_R (address to read from)
 	unsigned char SLA_R = address<<1 | 1; // create SLA_R byte by shifting address and setting R/W bit
 	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ; // wait for idle condition -- TWINT bit must be high to proceed
@@ -248,7 +247,7 @@ void i2c_read_from_address(unsigned char address) { //Write an address byte to t
 	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ; // wait for action to finish (poll TWINT bit)
 	// if ((TWSR & 0xF8) != MR_SLA_ACK) // error checking -- need to predefine MR_SLA_ACK and ERROR() function depending on possible outcomes: 0x38, 0x40, or 0x48.
 	//ERROR();
-}
+} // end i2c read from address
 void i2c_write_data( unsigned char data) { //Write data byte to the I2C2 bus
 	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ; // wait for idle condition -- TWINT bit must be high to proceed
 		TWDR = data; // Load TWDR with data to be sent
@@ -256,7 +255,7 @@ void i2c_write_data( unsigned char data) { //Write data byte to the I2C2 bus
 	while (!(TWCR & (1<<TWINT))); //while (!(TWCR & 0b10000000)) ; // wait for action to finish (poll TWINT bit)
 	// if ((TWSR & 0xF8) != MT_DATA_ACK) // error checking -- need to predefine MT_DATA_ACK and ERROR() function depending on possible outcomes: 0x28 or 0x30.
 	//ERROR();
-}
+} // end i2c write data
 unsigned char i2c_read_data(unsigned char ACK) { //Read a byte of data from a secondary on the I2C2 bus
 	unsigned char data;
 	while (!(TWCR & (1<<TWINT))); // wait for idle condition -- TWINT bit must be high to proceed
@@ -267,4 +266,58 @@ unsigned char i2c_read_data(unsigned char ACK) { //Read a byte of data from a se
 	while (!(TWCR & (1<<TWINT))); // wait for action to finish (poll TWINT bit)
 		data = TWDR; // read the received data from secondary
 	return(data);
-}
+} // end i2c read data
+
+void step_CCW()
+{
+	// This function advances the motor counter-clockwise one step.  Follow the full-wave stepping table in Stepper Motor Control.ppt for MEMS 1049 course. phase1a = PORTD_7, phase1b = PORTD_6
+	// phase2a = PORTD_5, phase2b = PORTD_4
+
+	switch (phase_step) {
+		case 1:
+		// step to 2
+		PORTD = 0b00010000;
+		phase_step = 2;
+		break;
+		case 2:
+		// step to 3
+		PORTD = 0b01000000;
+		phase_step = 3;
+		break;
+		case 3:
+		// step to 4;
+		PORTD = 0b00100000;
+		phase_step = 4;
+		break;
+		case 4:
+		// step to 1;
+		PORTD = 0b10000000;
+		phase_step = 1;
+	break;  }
+}// end step_CCW
+
+void step_CW() {
+	// This function advances the motor clockwise one step.  Follow the full-wave stepping table in Stepper Motor Control.ppt for MEMS 1049 course. Our stepper motor phases are assigned to Port pins as follows: phase1a = PORTD_7, phase1b = PORTD_6, phase2a = PORTD_5, phase2b = PORTD_4
+
+	switch (phase_step) {
+		case 1:
+		// step to 4
+		PORTD = 0b00100000;
+		phase_step = 4;
+		break;
+		case 2:
+		// step to 1
+		PORTD = 0b10000000;
+		phase_step = 1;
+		break;
+		case 3:
+		// step to 2;
+		PORTD = 0b00010000;
+		phase_step = 2;
+		break;
+		case 4:
+		// step to 3;
+		PORTD = 0b01000000;
+		phase_step = 3;
+	break;  }
+}// end step_CW
