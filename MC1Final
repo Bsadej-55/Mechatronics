@@ -31,6 +31,7 @@ void step_CCW( void );
 unsigned char temp_high, temp_low, temp_C, temp_F, temp_tens,
 temp_ones;
 int phase_step = 1; // We will use wave stepping, so the steps are numbered 1-4, then will repeat.
+int STOP_Please = 1;
 
 int main(void)
 {
@@ -70,21 +71,20 @@ int main(void)
 	//Setup for I2C
 	i2c_init();
 				PORTD = 0b00000000; //turn LED on
-
-	while (1)
+	if (!(PINC & 0b00000100))	// roller switch is pressed
 	{
-		// Setting Resolution
-		i2c_start(); //sends start command
-		i2c_write_to_address(0x18); //addressing the MCP9808 address
-		i2c_write_data(0x08); //writing data, calling on the resolution register
-		//don't need a repeated start as we are addressing the same secondary with the same R/W config
-		i2c_write_data(0x00); //writing the data which defines the resolution, for higher res. (0.0625C) set to 0b00000011 or 0x03
-		i2c_stop(); // stops the write
-
-		if (!(PINB & 0b00000010))	// roller switch is pressed
+		while (1)
 		{
-			while(1)
-			{		
+			// Setting Resolution
+			i2c_start(); //sends start command
+			i2c_write_to_address(0x18); //addressing the MCP9808 address
+			i2c_write_data(0x08); //writing data, calling on the resolution register
+			//don't need a repeated start as we are addressing the same secondary with the same R/W config
+			i2c_write_data(0x00); //writing the data which defines the resolution, for higher res. (0.0625C) set to 0b00000011 or 0x03
+			i2c_stop(); // stops the write
+	
+			while(STOP_Please = 1)
+			{
 		  		// Reading Data
 		  		i2c_start(); //sends start command
 		  		i2c_write_to_address(0x18); //addressing the MCP9808 adress
@@ -134,13 +134,12 @@ int main(void)
 				step_CW(); // on the last motor turn go back through the while loop instead of using a wait function
 
 			} // end while inside if statement
-		} // end button/switch if statement
-		else
-		{
-			PORTC = 0b00000011; // turn RED and YELLOW LEDs off
-		} // end button/switch else statement
-		
-	} //end while
+		} //end while
+	} // end button/switch if statement
+	else
+	{
+		PORTC = 0b00000011; // turn RED and YELLOW LEDs off
+	} // end button/switch else statement
 
 return(0);
 } //end void
@@ -148,7 +147,7 @@ return(0);
 //GREEN LED and Pusher Button Interrupt Service Routine (ISR) for INT0
 ISR(INT0_vect) { // checks if pusher button is pushed
 	if(!(PORTB & 0b00000001)) { // checks GREEN LED is on
-		////////////////
+		STOP_Please = 2;
 	}
 	wait(80,2); // switch debounce (waits to check switch pin status again -
 		    // prevents the system perceiving double presses)
