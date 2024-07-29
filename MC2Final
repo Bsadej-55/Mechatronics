@@ -32,9 +32,11 @@ int main(void)
 	// Data Registries - IO
 		// Follows a practice of making unused pins to be input (safer)
 	DDRB = 0b00101101;
-		// set bit PB0 as output for the green LEDs (wired)
+		// set bit PB0 as output for the GREEN LED
 		// set bits PB4-1 as inputs for the 2 buttons
 		// set bits PB5-3-2 as outputs for 7 segment display, pins SCK, MOSI, and SS as output
+	DDRC = 0b00000000;
+		// set bit PC0 as input for RED LED
 	DDRD = 0b11110000;
 		// set PD2 and PD3 for interupts
 		// set bits PD7-PD4 as output for the stepper motor
