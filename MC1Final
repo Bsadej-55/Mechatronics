@@ -67,77 +67,67 @@ int main(void)
 
 	while (1)
 	{
-  		// Setting Resolution
-  		i2c_start(); //sends start command
-  		i2c_write_to_address(0x18); //addressing the MCP9808 address
-  		i2c_write_data(0x08); //writing data, calling on the resolution register
-  		//don't need a repeated start as we are addressing the same secondary with the same R/W config
-  		i2c_write_data(0x00); //writing the data which defines the resolution, for higher res. (0.0625C) set to 0b00000011 or 0x03
-  		i2c_stop(); // stops the write 
-
-  		// Reading Data
-  		i2c_start(); //sends start command
-  		i2c_write_to_address(0x18); //addressing the MCP9808 adress
-  		i2c_write_data(0x05); //writing the data, calling on the ambient temperature register
-  		i2c_repeated_start(); //need the main to begin a new transfer without releasing the current transmission it is done
-  		//issues a new start before the stop
-  		i2c_read_from_address(0x18); //addressing where we are reading the data from
-  		temp_high = i2c_read_data(1); //reading the upperbyte of the data
-  		temp_low = i2c_read_data(0); //reading the lowerbyte of the data
-  		i2c_stop();//stops the command
-  
-  
-  		// Converting temperature from the two bits
-  		temp_high = temp_high & 0x1F; // Take only the last 5
-  		
-  		//bits of the higher temperature
-  		if((temp_high & 0x10) == 0x10)
-  		{
-  			temp_high = temp_high & 0x0F;
-  			temp_C = 256 - (temp_high * 16.0 +
-  			temp_low / 16.0);
-  		}
-  		else
-  		{
-  			temp_C = (temp_high * 16.0 + temp_low /
-  			16.0);
-  		}
-  		temp_F = temp_C * 9.0/5.0 + 32; // Convert from C to F
-  		temp_tens = temp_F /10; // Take the tens value from the temperature
-  		temp_ones = temp_F %10; // Take the ones value from the temperature
-  
-  		wait(500,1);
-  		
-  		if ((temp_tens*10)+ temp_ones >= 75) //Change the 75 value to whatever value we want the hot dog to be at
-  		{
-  				
-  			PORTD = 0b00000001; //turn LED off
-  		}
-  		else
-  		{
-  			PORTD = 0b00000000; //turn LED on
-  		}
-
-		if (!(PINB & 0b00000010))	// roller switch is pressed
+		//if (!(PINB & 0b00000010))	// roller switch is pressed
 		{
-			while(1)
-			{
-				// move 270 deg CW in 2 seconds & have led 1 (PB0) on
-				for (int i = 0; i<1000; i++) {
-					step_CCW();
-					wait(5, 1);
-				}
-				
-				wait(500, 1);	// wait 0.5 sec
-				
-				// move 90 deg CCW in 1 second & have led 2 (PB1) on
-				//for (int i = 0; i<1000; i++) {
-				//	step_CW();
-				//	wait(6,1);
-				//}
-			} // end motor while
+	  		// Setting Resolution
+	  		i2c_start(); //sends start command
+	  		i2c_write_to_address(0x18); //addressing the MCP9808 address
+	  		i2c_write_data(0x08); //writing data, calling on the resolution register
+	  		//don't need a repeated start as we are addressing the same secondary with the same R/W config
+	  		i2c_write_data(0x00); //writing the data which defines the resolution, for higher res. (0.0625C) set to 0b00000011 or 0x03
+	  		i2c_stop(); // stops the write 
+	
+	  		// Reading Data
+	  		i2c_start(); //sends start command
+	  		i2c_write_to_address(0x18); //addressing the MCP9808 adress
+	  		i2c_write_data(0x05); //writing the data, calling on the ambient temperature register
+	  		i2c_repeated_start(); //need the main to begin a new transfer without releasing the current transmission it is done
+	  		//issues a new start before the stop
+	  		i2c_read_from_address(0x18); //addressing where we are reading the data from
+	  		temp_high = i2c_read_data(1); //reading the upperbyte of the data
+	  		temp_low = i2c_read_data(0); //reading the lowerbyte of the data
+	  		i2c_stop();//stops the command
+	  
+	  
+	  		// Converting temperature from the two bits
+	  		temp_high = temp_high & 0x1F; // Take only the last 5
+	  		
+	  		//bits of the higher temperature
+	  		if((temp_high & 0x10) == 0x10)
+	  		{
+	  			temp_high = temp_high & 0x0F;
+	  			temp_C = 256 - (temp_high * 16.0 +
+	  			temp_low / 16.0);
+	  		}
+	  		else
+	  		{
+	  			temp_C = (temp_high * 16.0 + temp_low /
+	  			16.0);
+	  		}
+	  		temp_F = temp_C * 9.0/5.0 + 32; // Convert from C to F
+	  		temp_tens = temp_F /10; // Take the tens value from the temperature
+	  		temp_ones = temp_F %10; // Take the ones value from the temperature
+	  
+	  		// wait(500,1);
+	  		
+	  		if ((temp_tens*10)+ temp_ones >= 75) //Change the 75 value to whatever value we want the hot dog to be at
+	  		{
+	  				
+	  			PORTD = 0b00000001; //turn LED off
+	  		}
+	  		else
+	  		{
+	  			PORTD = 0b00000000; //turn LED on
+	  		}
+	
+			// move CW for 500msec seconds, takes the place of the 500msec wait function for the temperature sensor
+			for (int i = 0; i<999; i++) {
+				step_CW();
+				wait(5, 1);
+			}
+			step_CW(); // on the last turn go back through the while loop instead of using a wait function
 
-		} // end of button if statement
+		} // end button/switch if statement
 
 	}//end while
 
