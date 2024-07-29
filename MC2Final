@@ -21,16 +21,23 @@ int phase_step = 1; // We will use wave stepping, so the steps are numbered 1-4,
 
 int main(void)
 {
-    // setup
-    DDRB = 0b00000000;	// Set PB1 to input for button
-	  PORTB = 0b11111111; 
-	
-	DDRD = 0b11110000; // Sets pins 4, 5, 6, and 7 output, and 	pins 0, 1, 2 and 3 to input. Pins 4-7 will be used for 	stepper motor control
+	// Data Registries - IO
+		// Follows a practice of making unused pins to be input (safer)
+	DDRB = 0b00000001;
+		// set bit PB0 as output for the green LEDs (wired)
+		// set bits PB4-1 as inputs for the 2 buttons
+		// set bits PB5-3-2 for 7 segment display
+	DDRD = 0b11110000;
+		// set PD2 and PD3 for interupts
+		// set bits PD7-PD4 as output for the stepper motor
 
+	// Ports - Set or Clear Bits for stepper motor
+	PORTB = 0b00000001; // set output bits on PORTB so that all outputs are off (wired as active low)
+	PORTD = 0b11110000; // set output bits on PORTD so that all outputs are off (wired as active low)
 	
-    while (1) 
-    {
-		if (!(PINB & 0b00000010))	// switch is pressed
+	while (1) 
+	{
+		if (!(PINB & 0b00000010)) // switch is pressed
 		{
 			// move 270 deg CW in 2 seconds & have led 1 (PB0) on
 			for (int i = 0; i<1000; i++) {
@@ -46,7 +53,9 @@ int main(void)
 				wait(6,1);
 			}
 		}
-  }
+	}
+
+return(0);
 } // end main
 
 void wait(volatile int multiple, volatile char time_choice) {
