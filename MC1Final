@@ -118,12 +118,8 @@ int main(void)
   		{
   			PORTD = 0b00000000; //turn LED on
   		}
-  		
-	}//end temp sensor while
 
-	while (1) // motor
-	{
-		if (!(PINB & 0b00000010))	// switch is pressed
+		if (!(PINB & 0b00000010))	// roller switch is pressed
 		{
 			while(1)
 			{
@@ -140,9 +136,11 @@ int main(void)
 					step_CW();
 					wait(6,1);
 				}
-			}
-		}
-	} // end motor while
+			} // end motor while
+
+		} // end of button if statement
+
+	}//end while
 
 return(0);
 }//end void
