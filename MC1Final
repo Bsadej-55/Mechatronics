@@ -25,17 +25,36 @@ temp_ones;
 
 int main(void)
 {
-    // Set up Main SPI
-    SPCR = 0b01010001; // (SPIE = 0, SPE = 1, DORD = 0, MSTR = 1, CPOL = 0, CPHA = 0, SPR1 = 0, SPR0 = 1)
-    // enable the SPI, set to Main mode 0, SCK = Fosc/16, lead with MSB
+	// Set up Main SPI
+	SPCR = 0b01010001; // (SPIE = 0, SPE = 1, DORD = 0, MSTR = 1, CPOL = 0, CPHA = 0, SPR1 = 0, SPR0 = 1)
+	// enable the SPI, set to Main mode 0, SCK = Fosc/16, lead with MSB
 
-    //Setup for I2C
-    DDRC = 0b00000011; // Set all ports but 0 and 1 as input. 0 and 1 are
-    //defined as output
-    PORTC = 0b00110000; // Set SDA and SCK as pull up
-    i2c_init();
+	// Data Registries - IO
+		// Follows a practice of making unused pins to be input (safer)
+	DDRB = 0b11111111;
+		// set bits PB7-0 as output for relay idk about this might need to fix for relay
+	DDRC = 0b00000011;
+		// set PC0 as output for yellow LED (wired)
+		// set PC1 as output for red LED (wired)
+		// set PC2 as input for button
+		// set PC4 as input for temperature sensor
+		// set PC5 (ADC5) as input for analog for temperature sensor
+	DDRD = 0b11110011;
+		// set PD2 and PD3 for interupts
+		// set bits PD7-PD4 as outputs for stepper motor
 
-	  PORTD = 0b00000000; //Set LED to on
+	// Ports - Set or Clear
+	PORTB = 0b11111111;
+		// set output bits on PORTB so that all outputs are off (wired as active low) might need to fix for relay
+	PORTC = 0b00110011;
+		// set output bits on PORTC so that all outputs are off (wired as active low) except PC5-4
+		// Set SDA and SCK as pull up (PC5-4)
+	PORTD = 0b11110011;
+		// set output bits so that all outputs are off
+
+	//Setup for I2C
+	i2c_init();
+		PORTD = 0b00000000; //Set LED to on
 
     while (1) 
     {
