@@ -1,5 +1,5 @@
 /*
- * This Code is only for the sensor
+ * This Code is for microchip 1
  * Turns LED off when sensor reaches a certain temperature
  * Set to 75, should be set higher for final code
  */ 
