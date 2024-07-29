@@ -38,7 +38,7 @@ int main(void)
 	DDRC = 0b00000000;
 		// set bit PC0 as input for RED LED
 	DDRD = 0b11110000;
-		// set PD2 and PD3 for interupts
+		// set PD2 and PD3 for interupts (unnecessary)
 		// set bits PD7-PD4 as output for the stepper motor
 
 	// Ports - Set or Clear Bits for stepper motor
