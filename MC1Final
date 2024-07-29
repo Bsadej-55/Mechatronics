@@ -5,10 +5,14 @@
  */ 
 
 #include <avr/io.h>
-//Timer Functions
+
+#define FREQ_CLK 1000000 //clock frequency set for internal clock
+
+// Timer Functions
 void wait(volatile int multiple, volatile char time_choice);
 void delay_T_msec_timer0(char choice);
-//Temp Sensor I2C Functions
+
+// Temp Sensor I2C Functions
 void i2c_init(void);
 void i2c_start(void);
 void i2c_stop(void);
@@ -17,6 +21,12 @@ void i2c_write_to_address(unsigned char address);
 void i2c_read_from_address(unsigned char address);
 void i2c_write_data(unsigned char data);
 unsigned char i2c_read_data(unsigned char ack);
+
+// Motor Functions
+void step_CW( void );
+void step_CCW( void );
+void wait(volatile int multiple, volatile char time_choice);
+void delay_T_msec_timer0(char choice);
 
 
 //** GLOBAL VARIABLES **
