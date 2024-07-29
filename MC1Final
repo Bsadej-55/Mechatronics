@@ -5,6 +5,7 @@
  */ 
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
 
 #define FREQ_CLK 1000000 //clock frequency set for internal clock
 
