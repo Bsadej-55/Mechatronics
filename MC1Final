@@ -69,7 +69,7 @@ int main(void)
 
 	PORTD = 0b00000000; //Set 7 segment to on
 
-    while (1) 
+    while (1) // temp sensor
     {
   		// Setting Resolution
   		i2c_start(); //sends start command
@@ -122,7 +122,32 @@ int main(void)
   			PORTD = 0b00000000; //turn LED on
   		}
   		
-    }//end while
+	}//end temp sensor while
+
+	while (1) // motor
+	{
+		if (!(PINB & 0b00000010))	// switch is pressed
+		{
+			while(1)
+			{
+				// move 270 deg CW in 2 seconds & have led 1 (PB0) on
+				for (int i = 0; i<1000; i++) {
+					step_CCW();
+					wait(5, 1);
+				}
+				
+				wait(500, 1);	// wait 0.5 sec
+				
+				// move 90 deg CCW in 1 second & have led 2 (PB1) on
+				for (int i = 0; i<1000; i++) {
+					step_CW();
+					wait(6,1);
+				}
+			}
+		}
+	} // end motor while
+
+return(0);
 }//end void
 
 //Timer Functions
