@@ -18,7 +18,6 @@ void step_CCW( void );
 
 // 7-Segment Display Functions
 int send_to_MAX7221(unsigned char, unsigned char);
-void wait(volatile int multiple);
 void change_led_display1_state(int LEDstates1);
 void change_led_display2_state(int LEDstates2);
 void change_led_display3_state(int LEDstates3);
@@ -38,7 +37,7 @@ int main(void)
 	DDRC = 0b00000000;
 		// set bit PC0 as input for RED LED
 	DDRD = 0b11110000;
-		// set PD2 and PD3 for interupts (unnecessary)
+		// set PD2 and PD3 for interrupts (unnecessary)
 		// set bits PD7-PD4 as output for the stepper motor
 
 	// Ports - Set or Clear Bits for stepper motor
@@ -54,30 +53,63 @@ int main(void)
 
 	send_to_MAX7221(0b00001100,0b00000001); //turn on the display
 
-	while (1) // 7-segment
+	for(int i = 1; i < 3; i++)
 	{
-		for(int i = 1; i < 3; i++)
+		int LEDstates3 = i - 1;
+		change_led_display3_state(LEDstates3);
+
+		for(int j = 1; j < 6; j ++)
 		{
-			int LEDstates3 = i - 1;
-			change_led_display3_state(LEDstates3);
+			int LEDstates2 = j - 1;
+			change_led_display2_state(LEDstates2);
 
-			for(int j = 1; j < 6; j ++)
+			for(int k = 1; k < 10; k ++)
 			{
-				int LEDstates2 = j - 1;
-				change_led_display2_state(LEDstates2);
-
-				for(int k = 1; k < 10; k ++)
-				{
-					int LEDstates1 = k - 1;
-					change_led_display1_state(LEDstates1);
-					wait(1000);
-				}
+				int LEDstates1 = k - 1;
+				change_led_display1_state(LEDstates1);
+				wait(1000,1);
+				//for (int i = 0; i<200; i++) {
+				//step_CCW();
+				//wait(5, 1);
+				//}
 			}
 		}
+	}
+	
+	send_to_MAX7221(0b00001100,0b00000000); //turn off
+	for (int i = 0; i<5000; i++) {
+		step_CCW();
+		wait(5, 1);
+	}
+	for (int i = 0; i<5000; i++) {
+		step_CW();
+		wait(5, 1);
+	}
+	
+	while (1) // 7-segment
+	{
 		
-		send_to_MAX7221(0b00001100,0b00000000); //turn off
-	} //end 7-segment LED Display while
-
+	}
+		
+		
+		/*if (!(PINB & 0b00000010)) // switch is pressed
+		{
+			// move 270 deg CW in 2 seconds & have led 1 (PB0) on
+			for (int i = 0; i<1000; i++) {
+				step_CCW();
+				wait(5, 1);
+			}
+			
+			wait(500, 1);	// wait 0.5 sec
+			
+			// move 90 deg CCW in 1 second & have led 2 (PB1) on
+			for (int i = 0; i<1000; i++) {
+				step_CW();
+				wait(6,1);
+			}
+		}*/
+	
+	/*
 	while (1) // pusher motor
 	{
 		if (!(PINB & 0b00000010)) // switch is pressed
@@ -96,7 +128,21 @@ int main(void)
 				wait(6,1);
 			}
 		}
-	} // end motor while
+		
+		
+//		for(int i = 0; i < 10; i++)
+	//	{
+		//	int LEDstates3 = i;
+		//	change_led_display3_state(LEDstates3);
+		//	int LEDstates2 = i;
+		//	change_led_display2_state(LEDstates2);
+		//	int LEDstates1 = i;
+		//	change_led_display1_state(LEDstates1);
+		//	wait(1000,1);
+	//	}
+		
+		
+	} // end motor while */
 
 return(0);
 } // end main
@@ -212,3 +258,131 @@ void step_CW() {
 		phase_step = 3;
 	break;  }
 }// end step_CW
+
+int send_to_MAX7221(unsigned char command, unsigned char data) {
+	PORTB = PORTB & 0b11111011; // Clear PB2, which is the SS bit, so that transmission can begin
+	
+	SPDR = command; // Send command
+	while(!(SPSR & (1<<SPIF))); // Wait for transmission to finish
+	
+	SPDR = data; // Send data
+	while(!(SPSR & (1<<SPIF))); // Wait for transmission to finish
+	
+	PORTB = PORTB | 0b00000100; // Return PB2 to 1, which is the SS bit, to end transmission
+	
+	return 0;
+}
+
+void change_led_display1_state(int LEDstates1) {
+	switch (LEDstates1) {
+		case 0: // LED Display 1 = 0
+		send_to_MAX7221(0b00000001,0b00000000);	// 0 in binary on display 1
+		break;
+		case 1: // LED Display 1 = 1
+		send_to_MAX7221(0b00000001,0b00000001);	// 1 in binary on display 1
+		break;
+		case 2: // LED Display 1 = 2
+		send_to_MAX7221(0b00000001,0b00000010);	// 2 in binary on display 1
+		break;
+		case 3: // LED Display 1 = 3
+		send_to_MAX7221(0b00000001,0b00000011);	// 3 in binary on display 1
+		break;
+		case 4: // LED Display 1 = 4
+		send_to_MAX7221(0b00000001,0b00000100);	// 4 in binary on display 1
+		break;
+		case 5: // LED Display 1 = 5
+		send_to_MAX7221(0b00000001,0b00000101);	// 5 in binary on display 1
+		break;
+		case 6: // LED Display 1 = 6
+		send_to_MAX7221(0b00000001,0b00000110);	// 6 in binary on display 1
+		break;
+		case 7: // LED Display 1 = 7
+		send_to_MAX7221(0b00000001,0b00000111);	// 7 in binary on display 1
+		break;
+		case 8: // LED Display 1 = 8
+		send_to_MAX7221(0b00000001,0b00001000);	// 8 in binary on display 1
+		break;
+		case 9: // LED Display 1 = 9
+		send_to_MAX7221(0b00000001,0b00001001);	// 9 in binary on display 1
+		break;
+		default: // functions as a Case 'K' in the pattern
+		send_to_MAX7221(0b00000001,0b00000000);
+		break;
+	}
+} // end display 1
+
+void change_led_display2_state(int LEDstates2) {
+	switch (LEDstates2) {
+		case 0: // LED Display 2 = 0
+		send_to_MAX7221(0b00000010,0b00000000);	// 0 in binary on display 1
+		break;
+		case 1: // LED Display 2 = 1
+		send_to_MAX7221(0b00000010,0b00000001);	// 1 in binary on display 1
+		break;
+		case 2: // LED Display 2 = 2
+		send_to_MAX7221(0b00000010,0b00000010);	// 2 in binary on display 1
+		break;
+		case 3: // LED Display 2 = 3
+		send_to_MAX7221(0b00000010,0b00000011);	// 3 in binary on display 1
+		break;
+		case 4: // LED Display 2 = 4
+		send_to_MAX7221(0b00000010,0b00000100);	// 4 in binary on display 1
+		break;
+		case 5: // LED Display 2 = 5
+		send_to_MAX7221(0b00000010,0b00000101);	// 5 in binary on display 1
+		break;
+		case 6: // LED Display 2 = 6
+		send_to_MAX7221(0b00000010,0b00000110);	// 6 in binary on display 1
+		break;
+		case 7: // LED Display 2 = 7
+		send_to_MAX7221(0b00000010,0b00000111);	// 7 in binary on display 1
+		break;
+		case 8: // LED Display 2 = 8
+		send_to_MAX7221(0b00000010,0b00001000);	// 8 in binary on display 1
+		break;
+		case 9: // LED Display 2 = 9
+		send_to_MAX7221(0b00000010,0b00001001);	// 9 in binary on display 1
+		break;
+		default: // functions as a Case 'K' in the pattern
+		send_to_MAX7221(0b00000010,0b00000000);
+		break;
+	}
+} // end display 2
+
+void change_led_display3_state(int LEDstates3) {
+	switch (LEDstates3) {
+		case 0: // LED Display 3 = 0
+		send_to_MAX7221(0b00000011,0b00000000);	// 0 in binary on display 1
+		break;
+		case 1: // LED Display 3 = 1
+		send_to_MAX7221(0b00000011,0b00000001);	// 1 in binary on display 1
+		break;
+		case 2: // LED Display 3 = 2
+		send_to_MAX7221(0b00000011,0b00000010);	// 2 in binary on display 1
+		break;
+		case 3: // LED Display 3 = 3
+		send_to_MAX7221(0b00000011,0b00000011);	// 3 in binary on display 1
+		break;
+		case 4: // LED Display 3 = 4
+		send_to_MAX7221(0b00000011,0b00000100);	// 4 in binary on display 1
+		break;
+		case 5: // LED Display 3 = 5
+		send_to_MAX7221(0b00000011,0b00000101);	// 5 in binary on display 1
+		break;
+		case 6: // LED Display 3 = 6
+		send_to_MAX7221(0b00000011,0b00000110);	// 6 in binary on display 1
+		break;
+		case 7: // LED Display 3 = 7
+		send_to_MAX7221(0b00000011,0b00000111);	// 7 in binary on display 1
+		break;
+		case 8: // LED Display 3 = 8
+		send_to_MAX7221(0b00000011,0b00001000);	// 8 in binary on display 1
+		break;
+		case 9: // LED Display 3 = 9
+		send_to_MAX7221(0b00000011,0b00001001);	// 9 in binary on display 1
+		break;
+		default: // functions as a Case 'K' in the pattern
+		send_to_MAX7221(0b00000011,0b00000000);
+		break;
+	}
+} // end display 3
