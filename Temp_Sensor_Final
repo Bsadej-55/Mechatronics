@@ -25,6 +25,8 @@ temp_ones;
 
 int main(void)
 {
+	//relays
+	 DDRB = 0b00000110;
     // Set up Main SPI
     SPCR = 0b01010001; // (SPIE = 0, SPE = 1, DORD = 0, MSTR = 1, CPOL = 0, CPHA = 0, SPR1 = 0, SPR0 = 1)
     // enable the SPI, set to Main mode 0, SCK = Fosc/16, lead with MSB
@@ -32,10 +34,10 @@ int main(void)
     //Setup for I2C
     DDRC = 0b00000011; // Set all ports but 0 and 1 as input. 0 and 1 are
     //defined as output
-    PORTC = 0b00110000; // Set SDA and SCK as pull up
+    PORTC = 0b00110001; // Set SDA and SCK as pull up
     i2c_init();
 
-	  PORTD = 0b00000000; //Set LED to on
+	PORTB = 0b00000110; //Set LED to on
 
     while (1) 
     {
@@ -74,22 +76,26 @@ int main(void)
   			temp_C = (temp_high * 16.0 + temp_low /
   			16.0);
   		}
-  		temp_F = temp_C * 9.0/5.0 + 32; // Convert from C to F
-  		temp_tens = temp_F /10; // Take the tens value from the temperature
-  		temp_ones = temp_F %10; // Take the ones value from the temperature
-  
+  		
   		wait(500,1);
   		
-  		if ((temp_tens*10)+ temp_ones >= 75) //Change the 75 value to whatever value we want the hot dog to be at
+		if (temp_C >= 40) // turn led on
+		{ PORTC = 0b00110000;
+  		if (temp_C >= 58) //Change the 75 value to whatever value we want the hot dog to be at
   		{
-  				
-  			PORTD = 0b00000001; //turn LED off
+  			PORTC = 0b00110000;
+  			PORTB = 0b00000000; //turn Heater off
   		}
   		else
   		{
-  			PORTD = 0b00000000; //turn LED on
+			PORTC = 0b00110000;
+  			PORTB = 0b00000010; //turn Heater on
   		}
-  		
+		}//led if
+  		 else
+  		 {
+	  		 PORTC = 0b00110001;
+  		 }
     }//end while
 }//end void
 
@@ -211,5 +217,3 @@ unsigned char i2c_read_data(unsigned char ACK) { //Read a byte of data from a se
 		data = TWDR; // read the received data from secondary
 	return(data);
 }
-
-
