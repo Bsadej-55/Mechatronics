@@ -34,7 +34,7 @@ int main(void)
     //Setup for I2C
     DDRC = 0b00000011; // Set all ports but 0 and 1 as input. 0 and 1 are
     //defined as output
-    PORTC = 0b00110001; // Set SDA and SCK as pull up
+    PORTC = 0b00110011; // Set SDA and SCK as pull up
     i2c_init();
 
 	PORTB = 0b00000110; //Set LED to on
