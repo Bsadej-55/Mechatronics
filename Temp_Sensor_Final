@@ -41,61 +41,62 @@ int main(void)
 
     while (1) 
     {
-  		// Setting Resolution
-  		i2c_start(); //sends start command
-  		i2c_write_to_address(0x18); //addressing the MCP9808 address
-  		i2c_write_data(0x08); //writing data, calling on the resolution register
-  		//don't need a repeated start as we are addressing the same secondary with the same R/W config
-  		i2c_write_data(0x00); //writing the data which defines the resolution, for higher res. (0.0625C) set to 0b00000011 or 0x03
-  		i2c_stop(); // stops the write 
+  	// Setting Resolution
+	i2c_start(); //sends start command
+	i2c_write_to_address(0x18); //addressing the MCP9808 address
+	i2c_write_data(0x08); //writing data, calling on the resolution register
+	//don't need a repeated start as we are addressing the same secondary with the same R/W config
+	i2c_write_data(0x00); //writing the data which defines the resolution, for higher res. (0.0625C) set to 0b00000011 or 0x03
+	i2c_stop(); // stops the write 
 
-  		// Reading Data
-  		i2c_start(); //sends start command
-  		i2c_write_to_address(0x18); //addressing the MCP9808 adress
-  		i2c_write_data(0x05); //writing the data, calling on the ambient temperature register
-  		i2c_repeated_start(); //need the main to begin a new transfer without releasing the current transmission it is done
-  		//issues a new start before the stop
-  		i2c_read_from_address(0x18); //addressing where we are reading the data from
-  		temp_high = i2c_read_data(1); //reading the upperbyte of the data
-  		temp_low = i2c_read_data(0); //reading the lowerbyte of the data
-  		i2c_stop();//stops the command
-  
-  
-  		// Converting temperature from the two bits
-  		temp_high = temp_high & 0x1F; // Take only the last 5
-  		
-  		//bits of the higher temperature
-  		if((temp_high & 0x10) == 0x10)
-  		{
-  			temp_high = temp_high & 0x0F;
-  			temp_C = 256 - (temp_high * 16.0 +
-  			temp_low / 16.0);
-  		}
-  		else
-  		{
-  			temp_C = (temp_high * 16.0 + temp_low /
-  			16.0);
-  		}
-  		
-  		wait(500,1);
-  		
-		if (temp_C >= 40) // turn led on
-		{ PORTC = 0b00110000;
-  		if (temp_C >= 58) //Change the 75 value to whatever value we want the hot dog to be at
-  		{
-  			PORTC = 0b00110000;
-  			PORTB = 0b00000000; //turn Heater off
-  		}
-  		else
-  		{
-			PORTC = 0b00110000;
-  			PORTB = 0b00000010; //turn Heater on
-  		}
-		}//led if
-  		 else
-  		 {
-	  		 PORTC = 0b00110001;
-  		 }
+	// Reading Data
+	i2c_start(); //sends start command
+	i2c_write_to_address(0x18); //addressing the MCP9808 adress
+	i2c_write_data(0x05); //writing the data, calling on the ambient temperature register
+	i2c_repeated_start(); //need the main to begin a new transfer without releasing the current transmission it is done
+	//issues a new start before the stop
+	i2c_read_from_address(0x18); //addressing where we are reading the data from
+	temp_high = i2c_read_data(1); //reading the upperbyte of the data
+	temp_low = i2c_read_data(0); //reading the lowerbyte of the data
+	i2c_stop();//stops the command
+
+
+	// Converting temperature from the two bits
+	temp_high = temp_high & 0x1F; // Take only the last 5
+	
+	//bits of the higher temperature
+	if((temp_high & 0x10) == 0x10)
+	{
+		temp_high = temp_high & 0x0F;
+		temp_C = 256 - (temp_high * 16.0 +
+		temp_low / 16.0);
+	}
+	else
+	{
+		temp_C = (temp_high * 16.0 + temp_low /
+		16.0);
+	}
+	
+	wait(500,1);
+	
+	if (temp_C >= 40) // turn led on
+	{
+		PORTC = 0b00110010;
+		if (temp_C >= 58) //Change the 75 value to whatever value we want the hot dog to be at
+		{
+			PORTC = 0b00110010;
+			PORTB = 0b00000000; //turn Heater off
+		}
+		else
+		{
+			PORTC = 0b00110010;
+			PORTB = 0b00000010; //turn Heater on
+		}
+	} // LED if
+	else
+	{
+		PORTC = 0b00110001;
+	}
     }//end while
 }//end void
 
